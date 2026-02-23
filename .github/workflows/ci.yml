@@ -1,48 +1,10 @@
-name: CI
+name: CI - Turborepo
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
-
-jobs:
-  frontend-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install frontend dependencies
-        working-directory: frontend
-        run: |
-          npm ci
-
-      - name: Type check
-        working-directory: frontend
-        run: |
-          npm run type-check
-
-      - name: Run unit tests (Vitest)
-        working-directory: frontend
-        run: |
-          npm run test:run
-
-      - name: Run lint
-        working-directory: frontend
-        run: |
-          npm run lint || true
-name: CI - root / frontend / backend
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   root:
@@ -71,43 +33,43 @@ jobs:
         run: |
           if (Test-Path package.json) { npm run test --if-present } else { echo "No root package.json, skipping tests" }
 
-  frontend:
-    name: Frontend (Vite)
+  web:
+    name: Web (Vite)
     runs-on: ubuntu-latest
     needs: root
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check frontend directory
+      - name: Check web directory
         id: check
         shell: pwsh
         run: |
-          if (Test-Path frontend\package.json) { echo "exists=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 } else { echo "exists=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 }
+          if (Test-Path apps\web\package.json) { echo "exists=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 } else { echo "exists=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 }
 
-      - name: Setup Node.js (frontend)
+      - name: Setup Node.js (web)
         if: steps.check.outputs.exists == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: Install frontend deps
+      - name: Install web deps
         if: steps.check.outputs.exists == 'true'
         shell: pwsh
         run: |
-          cd frontend; npm ci
+          cd apps\web; npm ci
 
-      - name: Run frontend build & tests
+      - name: Run web build & tests
         if: steps.check.outputs.exists == 'true'
         shell: pwsh
         run: |
-          cd frontend; npm run build --if-present; npm run test --if-present
+          cd apps\web; npm run build --if-present; npm run test --if-present
 
-      - name: Skip frontend
+      - name: Skip web
         if: steps.check.outputs.exists == 'false'
-        run: echo "No frontend/package.json found — skipping frontend job"
+        run: echo "No apps/web/package.json found — skipping web job"
 
-  backend:
-    name: Backend (Node / migrations)
+  api:
+    name: API (Node / migrations)
     runs-on: ubuntu-latest
     needs: root
     env:
@@ -119,39 +81,39 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check backend directory
-        id: check-backend
+      - name: Check api directory
+        id: check-api
         shell: pwsh
         run: |
-          if (Test-Path backend\package.json) { echo "exists=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 } else { echo "exists=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 }
+          if (Test-Path apps\api\package.json) { echo "exists=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 } else { echo "exists=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 }
 
-      - name: Setup Node.js (backend)
-        if: steps.check-backend.outputs.exists == 'true'
+      - name: Setup Node.js (api)
+        if: steps.check-api.outputs.exists == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: Install backend deps
-        if: steps.check-backend.outputs.exists == 'true'
+      - name: Install api deps
+        if: steps.check-api.outputs.exists == 'true'
         shell: pwsh
         run: |
-          cd backend; npm ci
+          cd apps\api; npm ci
 
       - name: Validate environment (secrets)
-        if: github.event_name == 'push' && steps.check-backend.outputs.exists == 'true'
+        if: github.event_name == 'push' && steps.check-api.outputs.exists == 'true'
         shell: pwsh
         run: |
-          cd backend; CHECK_SECRETS=1 npm run check:env
+          cd apps\api; CHECK_SECRETS=1 npm run check:env
 
-      - name: Run backend lint & tests
-        if: steps.check-backend.outputs.exists == 'true'
+      - name: Run api lint & tests
+        if: steps.check-api.outputs.exists == 'true'
         shell: pwsh
         run: |
-          cd backend; npm run lint --if-present; npm run test --if-present
+          cd apps\api; npm run lint --if-present; npm run test --if-present
 
-      - name: Skip backend
-        if: steps.check-backend.outputs.exists == 'false'
-        run: echo "No backend/package.json found — skipping backend job"
+      - name: Skip api
+        if: steps.check-api.outputs.exists == 'false'
+        run: echo "No apps/api/package.json found — skipping api job"
 
   integration:
     name: Integration tests (Postgres service)
@@ -185,7 +147,7 @@ jobs:
       - name: Wait for Postgres
         run: |
           Write-Host "Waiting for Postgres to be ready...";
-          $retries = 0; while ($retries -lt 10) { if (pg_isready -h localhost -p 5432 -U postgres) { break } ; Start-Sleep -Seconds 2; $retries++ }; 
+          $retries = 0; while ($retries -lt 10) { if (pg_isready -h localhost -p 5432 -U postgres) { break } ; Start-Sleep -Seconds 2; $retries++ };
         shell: pwsh
 
       - name: Apply migrations
@@ -198,13 +160,13 @@ jobs:
         env:
           DATABASE_URL: ${{ env.DATABASE_URL }}
         run: |
-          npm run test:integration
+          cd apps\api && npm run test:integration
         shell: pwsh
 
   e2e-tests:
     name: End-to-End Tests
     runs-on: ubuntu-latest
-    needs: [root, backend]
+    needs: [root, api]
     services:
       postgres:
         image: postgres:15
@@ -243,15 +205,15 @@ jobs:
 
       - name: Seed E2E data
         run: |
-          cd backend && npm run seed:e2e
+          cd apps\api && npm run seed:e2e
         shell: pwsh
 
       - name: Install Playwright browsers
-        working-directory: frontend
+        working-directory: apps/web
         run: npx playwright install --with-deps
 
       - name: Run E2E tests (with test-mode)
-        working-directory: frontend
+        working-directory: apps/web
         env:
           BASE_URL: http://localhost:3000
           TEST_ENABLE_RESET_LINK_TO_RESPONSE: '1'
@@ -260,11 +222,10 @@ jobs:
           FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
         run: npm run test:e2e
 
-
   performance-tests:
     name: Performance Tests
     runs-on: ubuntu-latest
-    needs: [root, backend]
+    needs: [root, api]
     services:
       postgres:
         image: postgres:15
@@ -306,7 +267,7 @@ jobs:
 
       - name: Seed performance test data
         run: |
-          cd backend && npm run seed:e2e
+          cd apps\api && npm run seed:e2e
         shell: pwsh
 
       - name: Run performance tests
@@ -328,4 +289,3 @@ jobs:
             performance-results-*.json
             performance-summary-*.json
           retention-days: 30
-

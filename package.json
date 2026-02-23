@@ -1,25 +1,57 @@
 {
-  "name": "farmers-boot-retry",
+  "name": "farmers-boot",
   "version": "0.1.0",
   "private": true,
+  "description": "Farmers Boot - Comprehensive Farm Management Application",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=web",
+    "test": "turbo run test",
+    "test:web": "turbo run test --filter=web",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check",
+    "clean": "turbo run clean",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "build:shared": "cd packages/shared && npm run build",
+    "dev:shared": "cd packages/shared && npm run dev",
+    "deploy:web": "cd apps/web && npm run build && npm run deploy",
     "start:e2e": "node ./scripts/start-e2e-servers.js",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:integration": "cd backend && npm run test:integration",
     "test:performance": "node performance-tests/run-performance-tests.js",
-    "test:performance:ci": "TEST_BASE_URL=http://localhost:8787 node performance-tests/run-performance-tests.js",
-    "perf:auth": "echo \"Run: k6 run performance-tests/auth.k6.js --env BASE_URL=http://localhost:8787 --env TEST_USER_EMAIL=perfuser@example.com --env TEST_USER_PASSWORD=PerfPassw0rd! --vus 50 --duration 30s\"",
-    "test:all": "npm run test:integration && npm run test:e2e && npm run test:performance",
+    "test:performance:ci": "TEST_BASE_URL=http://localhost:5757 node performance-tests/run-performance-tests.js",
+    "perf:auth": "echo \"Run: k6 run performance-tests/auth.k6.js --env BASE_URL=http://localhost:5757 --env TEST_USER_EMAIL=perfuser@example.com --env TEST_USER_PASSWORD=PerfPassw0rd! --vus 50 --duration 30s\"",
+    "test:all": "npm run test:e2e && npm run test:performance",
     "deploy": "./scripts/deploy/deploy.sh",
     "deploy:windows": "powershell -ExecutionPolicy Bypass -File ./scripts/deploy/deploy.ps1",
-    "build": "cd frontend && npm run build",
-    "build:ci": "cd frontend && VITE_MAPBOX_TOKEN=dummy_token npm run build",
-    "dev": "cd frontend && npm run dev",
-    "dev:local": "wrangler pages dev frontend --local --port 8788",
-    "dev:functions": "wrangler dev --remote --port 8787",
-    "setup:local": "echo 'Setting up local development environment...' && echo '1. Install Wrangler CLI: npm install -g wrangler' && echo '2. Start Cloudflare D1 locally: wrangler d1 start' && echo '3. Copy .env.example to .env and fill in local values' && echo '4. Run migrations: wrangler d1 execute db --local --file=./migrations/0001_d1_complete_schema.sql' && echo '5. Run: npm run dev:local'",
-    "setup:local:windows": "powershell -ExecutionPolicy Bypass -File ./setup-local.ps1",
-    "setup:local:unix": "bash ./setup-local.sh"
-  }
+    "build:ci": "cd apps/web && VITE_MAPBOX_TOKEN=dummy_token npm run build",
+    "setup:local": "powershell -ExecutionPolicy Bypass -File ./setup-dev.ps1",
+    "setup:local:windows": "powershell -ExecutionPolicy Bypass -File ./setup-dev.ps1",
+    "setup:local:unix": "chmod +x setup-local.sh && ./setup-local.sh",
+    "supabase:start": "powershell -ExecutionPolicy Bypass -File ./start-supabase.ps1",
+    "supabase:stop": "docker compose -f docker-compose.supabase.yml down",
+    "supabase:reset": "docker compose -f docker-compose.supabase.yml down -v && powershell -ExecutionPolicy Bypass -File ./start-supabase.ps1",
+    "test:migration": "node ./scripts/test-migration.js",
+    "test:supabase-keys": "node ./scripts/test-supabase-keys.js",
+    "deploy:frontend:staging": "cd apps/web && npx wrangler pages deploy dist --branch staging",
+    "deploy:frontend:production": "cd apps/web && npx wrangler pages deploy dist --branch main",
+    "sonar:scan": "sonar-scanner",
+    "sonar:scan:local": "sonar-scanner -Dsonar.host.url=http://localhost:9000",
+    "analyze": "node scripts/static-analysis.js"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "prettier": "^3.6.2",
+    "typescript": "^5.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.0.0"
 }

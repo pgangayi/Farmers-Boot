@@ -1,0 +1,192 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  # Run tests first
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install web dependencies
+        working-directory: apps/web
+        run: npm ci
+
+      - name: Install api dependencies
+        working-directory: apps/api
+        run: npm ci
+
+      - name: Run web type check
+        working-directory: apps/web
+        run: npm run type-check
+
+      - name: Run web tests
+        working-directory: apps/web
+        run: npm run test:run
+
+      - name: Run api tests
+        working-directory: apps/api
+        run: npm run test --if-present
+
+  # Deploy backend to Cloudflare Workers
+  deploy-backend:
+    name: Deploy Backend
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.environment || 'production' }}
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install api dependencies
+        working-directory: apps/api
+        run: npm ci
+
+      - name: Deploy to Cloudflare Workers
+        id: deploy
+        working-directory: apps/api
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          ENV=${{ github.event.inputs.environment || 'production' }}
+          if [ "$ENV" == "staging" ]; then
+            npx wrangler deploy --env staging
+            echo "url=https://farmers-boot-retry-staging.your-subdomain.workers.dev" >> $GITHUB_OUTPUT
+          else
+            npx wrangler deploy --env production
+            echo "url=https://farmers-boot-retry.your-subdomain.workers.dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Verify Deployment
+        run: |
+          sleep 10
+          curl -f ${{ steps.deploy.outputs.url }}/health || exit 1
+
+  # Deploy frontend to Cloudflare Pages
+  deploy-frontend:
+    name: Deploy Frontend
+    needs: [test, deploy-backend]
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.environment || 'production' }}-frontend
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install web dependencies
+        working-directory: apps/web
+        run: npm ci
+
+      - name: Build web
+        working-directory: apps/web
+        env:
+          VITE_API_URL: ${{ github.event.inputs.environment == 'staging' && secrets.STAGING_API_URL || secrets.PRODUCTION_API_URL }}
+          VITE_MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+        run: npm run build
+
+      - name: Deploy to Cloudflare Pages
+        id: deploy
+        working-directory: apps/web
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          ENV=${{ github.event.inputs.environment || 'production' }}
+          if [ "$ENV" == "staging" ]; then
+            npx wrangler pages deploy dist --branch staging --project-name farmers-boot
+            echo "url=https://staging.farmers-boot.pages.dev" >> $GITHUB_OUTPUT
+          else
+            npx wrangler pages deploy dist --branch main --project-name farmers-boot
+            echo "url=https://farmers-boot.pages.dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Verify Deployment
+        run: |
+          sleep 30
+          curl -f ${{ steps.deploy.outputs.url }} || exit 1
+
+  # Run smoke tests after deployment
+  smoke-test:
+    name: Smoke Tests
+    needs: [deploy-backend, deploy-frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Playwright
+        run: npm install -g @playwright/test
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium
+
+      - name: Run smoke tests
+        env:
+          BASE_URL: ${{ needs.deploy-frontend.outputs.url }}
+          API_URL: ${{ needs.deploy-backend.outputs.url }}
+        run: |
+          echo "Running smoke tests against $BASE_URL"
+          # Add your smoke tests here
+          curl -f $API_URL/health || exit 1
+          curl -f $BASE_URL || exit 1
+
+  # Notify on deployment status
+  notify:
+    name: Notify
+    needs: [deploy-backend, deploy-frontend, smoke-test]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Success
+        if: needs.deploy-backend.result == 'success' && needs.deploy-frontend.result == 'success' && needs.smoke-test.result == 'success'
+        run: |
+          echo "✅ Deployment successful!"
+          echo "Backend: ${{ needs.deploy-backend.outputs.url }}"
+          echo "Frontend: ${{ needs.deploy-frontend.outputs.url }}"
+
+      - name: Notify Failure
+        if: needs.deploy-backend.result == 'failure' || needs.deploy-frontend.result == 'failure' || needs.smoke-test.result == 'failure'
+        run: |
+          echo "❌ Deployment failed!"
+          exit 1

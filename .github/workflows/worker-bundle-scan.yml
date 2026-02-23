@@ -14,20 +14,20 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: '18'
 
-      - name: Install backend deps
-        working-directory: backend
+      - name: Install api deps
+        working-directory: apps/api
         run: npm ci
 
       - name: Build Worker bundle (wrangler)
-        working-directory: backend
+        working-directory: apps/api
         run: |
           # Use npx so we don't need a global install
           npx wrangler build --outdir .wrangler || true
 
       - name: Scan bundle for Node-only or import-time env reads
-        working-directory: backend
+        working-directory: apps/api
         run: |
           echo "Scanning .wrangler for forbidden patterns..."
           set -o pipefail

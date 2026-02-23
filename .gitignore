@@ -188,6 +188,9 @@ playwright/.cache/
 *.temp
 .cache/
 
+# Turbo
+.turbo/
+
 # Cleanup artifacts
 # Debug & build logs
 debug_output*.txt
@@ -204,3 +207,11 @@ tmp_*.sql
 # Archived node_modules backups
 node_modules._bak_*/
 *.bak
+
+# Docker
+.env.docker
+docker-compose.override.yml
+
+# Docker volumes (local development)
+# Uncomment if you want to ignore Docker volume data
+# docker-data/

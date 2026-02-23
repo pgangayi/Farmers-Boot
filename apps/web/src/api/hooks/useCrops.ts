@@ -1,0 +1,86 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiClient } from '../../lib';
+import { QUERY_KEYS, CACHE_CONFIG } from '../constants';
+import type { Crop, CreateRequest, UpdateRequest } from '../types';
+import { LookupService } from '../../services/lookupService';
+
+export function useCrops(farm_id?: string) {
+  return useQuery({
+    queryKey: farm_id ? QUERY_KEYS.crops.byFarm(farm_id) : QUERY_KEYS.crops.all,
+    queryFn: async () => {
+      const endpoint = farm_id ? `crops?farm_id=eq.${farm_id}` : 'crops';
+      return await apiClient.get<Crop[]>(endpoint);
+    },
+    staleTime: CACHE_CONFIG.staleTime.crops,
+  });
+}
+
+export function useCrop(id: string) {
+  return useQuery({
+    queryKey: QUERY_KEYS.crops.detail(id),
+    queryFn: async () => {
+      return await apiClient.get<Crop>(`crops?id=eq.${id}`, { single: true });
+    },
+    enabled: !!id,
+    staleTime: CACHE_CONFIG.staleTime.crops,
+  });
+}
+
+export function useCropVarieties(cropType?: string) {
+  return useQuery({
+    queryKey: ['crop-varieties', cropType],
+    queryFn: () => LookupService.getCropVarieties(cropType),
+    staleTime: CACHE_CONFIG.staleTime.crops,
+  });
+}
+
+export function useStrains() {
+  return useCropVarieties();
+}
+
+export function useAddCropVariety() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: LookupService.addCropVariety,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crop-varieties'] });
+    },
+  });
+}
+
+export function useCreateCrop() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: CreateRequest<Crop>) => {
+      return await apiClient.post<Crop>('crops', data as any);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.crops.all });
+    },
+  });
+}
+
+export function useUpdateCrop() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateRequest<Crop> }) => {
+      return await apiClient.put<Crop>(`crops?id=eq.${id}`, data as any, { single: true });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.crops.all });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.crops.detail(variables.id) });
+    },
+  });
+}
+
+export function useDeleteCrop() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await apiClient.delete(`crops?id=eq.${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.crops.all });
+    },
+  });
+}

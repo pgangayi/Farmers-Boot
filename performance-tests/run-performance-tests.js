@@ -9,7 +9,7 @@ class PerformanceTestRunner {
     this.results = {
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV || 'development',
-      benchmarks: {}
+      benchmarks: {},
     };
   }
 
@@ -30,8 +30,9 @@ class PerformanceTestRunner {
       this.generateReport();
 
       console.log('\n✅ Performance tests completed successfully');
-      console.log(`📊 Results saved to: performance-results-${this.results.timestamp.split('T')[0]}.json`);
-
+      console.log(
+        `📊 Results saved to: performance-results-${this.results.timestamp.split('T')[0]}.json`
+      );
     } catch (error) {
       console.error('❌ Performance tests failed:', error.message);
       process.exit(1);
@@ -42,7 +43,7 @@ class PerformanceTestRunner {
     console.log('🔍 Checking backend health...');
 
     try {
-      const healthUrl = process.env.TEST_BASE_URL || 'http://localhost:8787';
+      const healthUrl = process.env.TEST_BASE_URL || 'http://localhost:5757';
       const response = await fetch(`${healthUrl}/api/health`);
 
       if (!response.ok) {
@@ -62,17 +63,17 @@ class PerformanceTestRunner {
     const testUser = {
       email: 'performance-test@example.com',
       password: 'TestPass123!',
-      name: 'Performance Test User'
+      name: 'Performance Test User',
     };
 
     try {
-      const baseUrl = process.env.TEST_BASE_URL || 'http://localhost:8787';
+      const baseUrl = process.env.TEST_BASE_URL || 'http://localhost:5757';
 
       // Try to register user (ignore if already exists)
       await fetch(`${baseUrl}/api/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(testUser)
+        body: JSON.stringify(testUser),
       });
 
       // Login to get token
@@ -81,8 +82,8 @@ class PerformanceTestRunner {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: testUser.email,
-          password: testUser.password
-        })
+          password: testUser.password,
+        }),
       });
 
       if (!loginResponse.ok) {
@@ -97,13 +98,13 @@ class PerformanceTestRunner {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           name: 'Performance Test Farm',
           location: 'Test Location',
-          area_hectares: 100
-        })
+          area_hectares: 100,
+        }),
       });
 
       if (farmResponse.ok) {
@@ -136,7 +137,6 @@ class PerformanceTestRunner {
         const results = JSON.parse(fs.readFileSync(outputFile, 'utf8'));
         this.analyzeResults(results);
       }
-
     } catch (error) {
       throw new Error(`Artillery test execution failed: ${error.message}`);
     }
@@ -155,13 +155,13 @@ class PerformanceTestRunner {
         max: aggregate.latency.max,
         median: aggregate.latency.median,
         p95: aggregate.latency.p95,
-        p99: aggregate.latency.p99
+        p99: aggregate.latency.p99,
       },
       throughput: {
         rps_mean: aggregate.rps.mean,
-        rps_count: aggregate.rps.count
+        rps_count: aggregate.rps.count,
       },
-      scenarios: artilleryResults.aggregate.scenariosCreated
+      scenarios: artilleryResults.aggregate.scenariosCreated,
     };
 
     // Performance benchmarks
@@ -169,26 +169,35 @@ class PerformanceTestRunner {
       response_time_p95: {
         value: aggregate.latency.p95,
         threshold: 1000, // 1 second
-        status: aggregate.latency.p95 <= 1000 ? 'PASS' : 'FAIL'
+        status: aggregate.latency.p95 <= 1000 ? 'PASS' : 'FAIL',
       },
       error_rate: {
         value: aggregate.errors ? (aggregate.errors.total / aggregate.requestsCompleted) * 100 : 0,
         threshold: 5, // 5% max error rate
-        status: (aggregate.errors ? (aggregate.errors.total / aggregate.requestsCompleted) * 100 : 0) <= 5 ? 'PASS' : 'FAIL'
+        status:
+          (aggregate.errors ? (aggregate.errors.total / aggregate.requestsCompleted) * 100 : 0) <= 5
+            ? 'PASS'
+            : 'FAIL',
       },
       throughput_rps: {
         value: aggregate.rps.mean,
         threshold: 10, // Minimum 10 RPS
-        status: aggregate.rps.mean >= 10 ? 'PASS' : 'FAIL'
-      }
+        status: aggregate.rps.mean >= 10 ? 'PASS' : 'FAIL',
+      },
     };
 
     this.results.benchmarks.thresholds = benchmarks;
 
     console.log('\n📈 Performance Benchmarks:');
-    console.log(`   Response Time (P95): ${aggregate.latency.p95}ms [${benchmarks.response_time_p95.status}]`);
-    console.log(`   Error Rate: ${(aggregate.errors ? (aggregate.errors.total / aggregate.requestsCompleted) * 100 : 0).toFixed(2)}% [${benchmarks.error_rate.status}]`);
-    console.log(`   Throughput: ${aggregate.rps.mean.toFixed(2)} RPS [${benchmarks.throughput_rps.status}]`);
+    console.log(
+      `   Response Time (P95): ${aggregate.latency.p95}ms [${benchmarks.response_time_p95.status}]`
+    );
+    console.log(
+      `   Error Rate: ${(aggregate.errors ? (aggregate.errors.total / aggregate.requestsCompleted) * 100 : 0).toFixed(2)}% [${benchmarks.error_rate.status}]`
+    );
+    console.log(
+      `   Throughput: ${aggregate.rps.mean.toFixed(2)} RPS [${benchmarks.throughput_rps.status}]`
+    );
   }
 
   generateReport() {
@@ -206,9 +215,9 @@ class PerformanceTestRunner {
         total_requests: this.results.benchmarks.total_requests,
         error_rate_percent: this.results.benchmarks.thresholds?.error_rate?.value || 0,
         avg_response_time_ms: this.results.benchmarks.response_times?.median || 0,
-        throughput_rps: this.results.benchmarks.throughput?.rps_mean || 0
+        throughput_rps: this.results.benchmarks.throughput?.rps_mean || 0,
       },
-      recommendations: this.generateRecommendations()
+      recommendations: this.generateRecommendations(),
     };
 
     const summaryFile = `performance-summary-${this.results.timestamp.split('T')[0]}.json`;
@@ -223,7 +232,7 @@ class PerformanceTestRunner {
     const thresholds = this.results.benchmarks.thresholds;
     if (!thresholds) return 'UNKNOWN';
 
-    const allPass = Object.values(thresholds).every(t => t.status === 'PASS');
+    const allPass = Object.values(thresholds).every((t) => t.status === 'PASS');
     return allPass ? 'PASS' : 'FAIL';
   }
 
@@ -247,14 +256,16 @@ class PerformanceTestRunner {
       recommendations.push('High P99 latency detected - optimize for worst-case performance');
     }
 
-    return recommendations.length > 0 ? recommendations : ['Performance meets all benchmarks - consider monitoring for regressions'];
+    return recommendations.length > 0
+      ? recommendations
+      : ['Performance meets all benchmarks - consider monitoring for regressions'];
   }
 }
 
 // Run the performance tests
 if (require.main === module) {
   const runner = new PerformanceTestRunner();
-  runner.runTests().catch(error => {
+  runner.runTests().catch((error) => {
     console.error('Performance test runner failed:', error);
     process.exit(1);
   });

@@ -39,9 +39,8 @@ if (!(Get-Command npm -ErrorAction SilentlyContinue)) {
     exit 1
 }
 
-if (!(Get-Command wrangler -ErrorAction SilentlyContinue)) {
-    Write-Warning "Wrangler CLI not found. Installing globally..."
-    npm install -g wrangler
+if (!(Get-Command docker -ErrorAction SilentlyContinue)) {
+    Write-Warning "Docker not found. Docker is required to run the local Supabase stack."
 }
 
 Write-Success "All required tools found"
@@ -50,8 +49,8 @@ Write-Success "All required tools found"
 Write-Info "Tool versions:"
 Write-Info "Node.js: $(node --version)"
 Write-Info "npm: $(npm --version)"
-if (Get-Command wrangler -ErrorAction SilentlyContinue) {
-    Write-Info "Wrangler: $(wrangler --version)"
+if (Get-Command docker -ErrorAction SilentlyContinue) {
+    Write-Info "Docker: $(docker --version)"
 }
 
 # Setup environment file
@@ -75,21 +74,20 @@ if ($CleanAll) {
     Write-Info "Cleaning up existing processes..."
     Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force
     Get-Process npm -ErrorAction SilentlyContinue | Stop-Process -Force
-    Get-Process wrangler -ErrorAction SilentlyContinue | Stop-Process -Force
 }
 
 # Clean node_modules and lock files if requested
 if ($CleanAll) {
     Write-Info "Cleaning node_modules directories..."
     
-    $dirs = @("", "frontend", "functions")
+    $dirs = @("", "apps/web", "packages/shared")
     foreach ($dir in $dirs) {
-        $nodeModules = if ($dir) { "$dir\node_modules" } else { "node_modules" }
-        $packageLock = if ($dir) { "$dir\package-lock.json" } else { "package-lock.json" }
+        $nodeModules = if ($dir) { "$dir/node_modules" } else { "node_modules" }
+        $packageLock = if ($dir) { "$dir/package-lock.json" } else { "package-lock.json" }
         
         if (Test-Path $nodeModules) {
             Write-Info "Removing $nodeModules"
-            Remove-Item $nodeModules -Recurse -Force
+            Remove-Item $nodeModules -Recurse -Force | Out-Null
         }
         
         if (Test-Path $packageLock) {
@@ -101,20 +99,8 @@ if ($CleanAll) {
 
 # Install dependencies unless skipped
 if (!$SkipInstall) {
-    Write-Info "Installing dependencies..."
-    
-    Write-Info "Installing root dependencies..."
+    Write-Info "Installing all dependencies via workspaces..."
     npm install
-    
-    Write-Info "Installing frontend dependencies..."
-    Set-Location frontend
-    npm install
-    Set-Location ..
-    
-    Write-Info "Installing functions dependencies..."
-    Set-Location functions
-    npm install
-    Set-Location ..
     
     Write-Success "All dependencies installed successfully"
 } else {
@@ -137,7 +123,7 @@ Write-Info "Checking for common issues..."
 $issues = @()
 
 # Check if ports are in use
-$ports = @(3000, 5173, 8787, 8788)
+$ports = @(5000, 54321, 54322, 54323)
 foreach ($port in $ports) {
     $process = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
     if ($process) {
@@ -161,8 +147,8 @@ Write-Success "Setup completed successfully!"
 Write-Host ""
 Write-Info "Next steps:"
 Write-Info "1. Edit $EnvFile file with your actual API keys"
-Write-Info "2. Run 'npm run dev' to start development servers"
-Write-Info "3. Or run the start-dev.bat script"
+Write-Info "2. Run 'npm run dev' to start the web application"
+Write-Info "3. Run 'npm run supabase:start' to start the local backend"
 Write-Host ""
 Write-Info "Available commands:"
 Write-Info "  npm run dev        - Start development servers"

@@ -1,0 +1,183 @@
+_format_version: '3.0'
+
+services:
+  # PostgREST API Service
+  - name: api
+    url: http://api:3000
+    routes:
+      - name: api-route
+        paths:
+          - /rest/v1
+        strip_path: true
+
+  # Auth Service
+  - name: auth
+    url: http://auth:9999
+    routes:
+      - name: auth-route
+        paths:
+          - /auth/v1
+        strip_path: true
+
+  # Realtime Service
+  - name: realtime
+    url: http://realtime:4000
+    routes:
+      - name: realtime-route
+        paths:
+          - /realtime/v1
+        strip_path: true
+
+  # Storage Service
+  - name: storage
+    url: http://storage:5000
+    routes:
+      - name: storage-route
+        paths:
+          - /storage/v1
+        strip_path: true
+
+  # Studio Service
+  - name: studio
+    url: http://studio:3000
+    routes:
+      - name: studio-route
+        paths:
+          - /studio
+        strip_path: false
+
+plugins:
+  # CORS Plugin
+  - name: cors
+    config:
+      origins:
+        - '*'
+      methods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+      headers:
+        - Accept
+        - Authorization
+        - Content-Type
+        - X-Client-Info
+        - apikey
+      exposed_headers:
+        - Content-Range
+        - X-Content-Range
+      credentials: true
+      max_age: 3600
+
+  # JWT Plugin
+  - name: jwt
+    config:
+      uri_param_names:
+        - jwt
+      cookie_names:
+        - supabase-auth-token
+      claims_to_verify:
+        - exp
+
+  # Request Transformer Plugin
+  - name: request-transformer
+    config:
+      add:
+        headers:
+          - X-Client-Info:supabase-docker/1.0.0
+
+consumers:
+  # Anonymous user
+  - username: anon
+    jwt_secrets:
+      - secret: your-super-secret-jwt-token-with-at-least-32-characters-long
+        algorithm: HS256
+
+  # Authenticated user
+  - username: authenticated
+    jwt_secrets:
+      - secret: your-super-secret-jwt-token-with-at-least-32-characters-long
+        algorithm: HS256
+
+  # Service role
+  - username: service_role
+    jwt_secrets:
+      - secret: your-super-secret-jwt-token-with-at-least-32-characters-long
+        algorithm: HS256
+
+# ACLs for role-based access
+acls:
+  - consumer: anon
+    group: anon
+  - consumer: authenticated
+    group: authenticated
+  - consumer: service_role
+    group: service_role
+
+# Upstreams for load balancing
+upstreams:
+  - name: api-upstream
+    algorithm: round-robin
+    healthchecks:
+      active:
+        type: http
+        http_path: /
+        healthy:
+          interval: 10
+          successes: 2
+        unhealthy:
+          interval: 10
+          http_failures: 3
+    targets:
+      - target: api:3000
+        weight: 100
+
+  - name: auth-upstream
+    algorithm: round-robin
+    healthchecks:
+      active:
+        type: http
+        http_path: /health
+        healthy:
+          interval: 10
+          successes: 2
+        unhealthy:
+          interval: 10
+          http_failures: 3
+    targets:
+      - target: auth:9999
+        weight: 100
+
+  - name: realtime-upstream
+    algorithm: round-robin
+    healthchecks:
+      active:
+        type: http
+        http_path: /api/health
+        healthy:
+          interval: 10
+          successes: 2
+        unhealthy:
+          interval: 10
+          http_failures: 3
+    targets:
+      - target: realtime:4000
+        weight: 100
+
+  - name: storage-upstream
+    algorithm: round-robin
+    healthchecks:
+      active:
+        type: http
+        http_path: /status
+        healthy:
+          interval: 10
+          successes: 2
+        unhealthy:
+          interval: 10
+          http_failures: 3
+    targets:
+      - target: storage:5000
+        weight: 100

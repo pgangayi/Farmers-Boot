@@ -1,0 +1,129 @@
+src/__tests__/hooks/useLivestock-old.test.ts(152,25): error TS2339: Property 'mockReturnValue' does not exist on type '{ <TableName extends string, Table extends any>(relation: TableName): PostgrestQueryBuilder<any, any, Table, TableName, Table extends { Relationships: infer R; } ? R : unknown>; <ViewName extends string, View extends any>(relation: ViewName): PostgrestQueryBuilder<...>; }'.
+src/__tests__/hooks/useLivestock-old.test.ts(163,40): error TS2345: Argument of type '{ tag_number: string; breed: string; gender: string; birth_date: string; weight: number; status: string; location: string; notes: string; farm_id: string; }' is not assignable to parameter of type 'CreateRequest<Livestock>'.
+src/__tests__/hooks/useLivestock-old.test.ts(186,25): error TS2339: Property 'mockReturnValue' does not exist on type '{ <TableName extends string, Table extends any>(relation: TableName): PostgrestQueryBuilder<any, any, Table, TableName, Table extends { Relationships: infer R; } ? R : unknown>; <ViewName extends string, View extends any>(relation: ViewName): PostgrestQueryBuilder<...>; }'.
+src/__tests__/hooks/useLivestock-old.test.ts(197,47): error TS2345: Argument of type '{ tag_number: string; breed: string; gender: string; birth_date: string; weight: number; status: string; location: string; notes: string; farm_id: string; }' is not assignable to parameter of type 'CreateRequest<Livestock>'.
+src/__tests__/hooks/useLivestock-old.test.ts(214,25): error TS2339: Property 'mockReturnValue' does not exist on type '{ <TableName extends string, Table extends any>(relation: TableName): PostgrestQueryBuilder<any, any, Table, TableName, Table extends { Relationships: infer R; } ? R : unknown>; <ViewName extends string, View extends any>(relation: ViewName): PostgrestQueryBuilder<...>; }'.
+src/__tests__/hooks/useLivestock-old.test.ts(227,61): error TS2322: Type '{ weight: number; status: string; notes: string; }' is not assignable to type 'Partial<Omit<Livestock, "id" | "created_at" | "updated_at">>'.
+src/__tests__/hooks/useLivestock-old.test.ts(240,25): error TS2339: Property 'mockReturnValue' does not exist on type '{ <TableName extends string, Table extends any>(relation: TableName): PostgrestQueryBuilder<any, any, Table, TableName, Table extends { Relationships: infer R; } ? R : unknown>; <ViewName extends string, View extends any>(relation: ViewName): PostgrestQueryBuilder<...>; }'.
+src/__tests__/hooks/useLivestock-old.test.ts(254,57): error TS2559: Type '{ weight: number; }' has no properties in common with type 'Partial<Omit<Livestock, "id" | "created_at" | "updated_at">>'.
+src/__tests__/hooks/useLivestock-old.test.ts(266,25): error TS2339: Property 'mockReturnValue' does not exist on type '{ <TableName extends string, Table extends any>(relation: TableName): PostgrestQueryBuilder<any, any, Table, TableName, Table extends { Relationships: infer R; } ? R : unknown>; <ViewName extends string, View extends any>(relation: ViewName): PostgrestQueryBuilder<...>; }'.
+src/__tests__/hooks/useLivestock-old.test.ts(286,25): error TS2339: Property 'mockReturnValue' does not exist on type '{ <TableName extends string, Table extends any>(relation: TableName): PostgrestQueryBuilder<any, any, Table, TableName, Table extends { Relationships: infer R; } ? R : unknown>; <ViewName extends string, View extends any>(relation: ViewName): PostgrestQueryBuilder<...>; }'.
+src/__tests__/hooks/useLivestock.test.ts(142,40): error TS2345: Argument of type '{ tag_number: string; breed: string; gender: string; birth_date: string; weight: number; status: "healthy"; location: string; notes: string; farm_id: string; }' is not assignable to parameter of type 'CreateRequest<Livestock>'.
+src/__tests__/hooks/useLivestock.test.ts(170,47): error TS2345: Argument of type '{ tag_number: string; breed: string; gender: string; birth_date: string; weight: number; status: "healthy"; location: string; notes: string; farm_id: string; }' is not assignable to parameter of type 'CreateRequest<Livestock>'.
+src/__tests__/hooks/useLivestock.test.ts(190,61): error TS2322: Type '{ weight: number; status: "healthy"; notes: string; }' is not assignable to type 'Partial<Omit<Livestock, "id" | "created_at" | "updated_at">>'.
+src/__tests__/hooks/useLivestock.test.ts(209,57): error TS2559: Type '{ weight: number; }' has no properties in common with type 'Partial<Omit<Livestock, "id" | "created_at" | "updated_at">>'.
+src/__tests__/setup.ts(190,46): error TS2833: Cannot find namespace 'vi'. Did you mean 'Vi'?
+src/api/hooks/useLivestock.ts(238,21): error TS2339: Property 'livestock_id' does not exist on type 'CreateRequest<AnimalHealth>'.
+src/api/hooks/useLivestock.ts(240,59): error TS2339: Property 'livestock_id' does not exist on type 'CreateRequest<AnimalHealth>'.
+src/api/hooks/useLivestock.ts(308,21): error TS2339: Property 'livestock_id' does not exist on type 'CreateRequest<ProductionRecord>'.
+src/api/hooks/useLivestock.ts(310,63): error TS2339: Property 'livestock_id' does not exist on type 'CreateRequest<ProductionRecord>'.
+src/api/hooks/useLivestock.ts(353,21): error TS2339: Property 'livestock_id' does not exist on type 'CreateRequest<BreedingRecord>'.
+src/api/hooks/useLivestock.ts(355,61): error TS2339: Property 'livestock_id' does not exist on type 'CreateRequest<BreedingRecord>'.
+src/api/hooks/useLivestock.ts(394,24): error TS2339: Property 'type' does not exist on type 'Livestock'.
+src/api/hooks/useLivestock.ts(394,44): error TS2339: Property 'type' does not exist on type 'Livestock'.
+src/components/AdvancedManagementDashboard.tsx(186,5): error TS2769: No overload matches this call.
+src/components/AdvancedManagementDashboard.tsx(322,47): error TS2322: Type 'Dispatch<SetStateAction<"7d" | "30d" | "90d" | "24h">>' is not assignable to type '(value: string) => void'.
+src/components/AdvancedManagementDashboard.tsx(410,43): error TS2362: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+src/components/AdvancedManagementDashboard.tsx(449,33): error TS2339: Property 'map' does not exist on type 'NonNullable<NoInfer<TQueryFnData>>'.
+src/components/AdvancedManagementDashboard.tsx(449,37): error TS7006: Parameter 'resource' implicitly has an 'any' type.
+src/components/AdvancedManagementDashboard.tsx(532,32): error TS18048: 'activity.status' is possibly 'undefined'.
+src/components/CropForm.tsx(32,15): error TS2769: No overload matches this call.
+src/components/CropForm.tsx(92,25): error TS2345: Argument of type 'Omit<Crop, "id" | "created_at" | "updated_at">[]' is not assignable to parameter of type 'SetStateAction<Crop[]>'.
+src/components/CropForm.tsx(120,23): error TS2345: Argument of type 'Omit<Crop, "id" | "created_at" | "updated_at">[]' is not assignable to parameter of type 'SetStateAction<Crop[]>'.
+src/components/GlobalSearch.tsx(286,25): error TS2345: Argument of type 'SearchResult | undefined' is not assignable to parameter of type 'SearchResult'.
+src/components/information/InfoIcon.tsx(172,14): error TS2322: Type '{ children: string; jsx: true; }' is not assignable to type 'DetailedHTMLProps<StyleHTMLAttributes<HTMLStyleElement>, HTMLStyleElement>'.
+src/components/information/InformationProvider.tsx(35,13): error TS2741: Property 'metadata' is missing in type '{ id: string; category_id: string; title: string; slug: string; description: string; content: string; summary: string; tags: string[]; difficulty_level: "beginner"; reading_time_minutes: number; ... 6 more ...; related_topics: never[]; }' but required in type 'InfoTopic'.
+src/components/information/InformationProvider.tsx(113,7): error TS2741: Property 'metadata' is missing in type '{ id: string; category_id: string; title: string; slug: string; description: string; content: string; summary: string; tags: string[]; difficulty_level: "beginner"; reading_time_minutes: number; ... 7 more ...; related_topics: string[]; }' but required in type 'InfoTopic'.
+src/components/information/InformationProvider.tsx(153,7): error TS2741: Property 'metadata' is missing in type '{ id: string; category_id: string; title: string; slug: string; description: string; content: string; summary: string; tags: string[]; difficulty_level: "intermediate"; reading_time_minutes: number; ... 6 more ...; related_topics: string[]; }' but required in type 'InfoTopic'.
+src/components/information/InformationProvider.tsx(197,7): error TS2741: Property 'metadata' is missing in type '{ id: string; category_id: string; title: string; slug: string; description: string; content: string; summary: string; tags: string[]; difficulty_level: "beginner"; reading_time_minutes: number; ... 6 more ...; related_topics: string[]; }' but required in type 'InfoTopic'.
+src/components/information/InformationProvider.tsx(237,7): error TS2741: Property 'metadata' is missing in type '{ id: string; category_id: string; title: string; slug: string; description: string; content: string; summary: string; tags: string[]; difficulty_level: "intermediate"; reading_time_minutes: number; ... 6 more ...; related_topics: string[]; }' but required in type 'InfoTopic'.
+src/components/information/InformationProvider.tsx(281,5): error TS2322: Type 'InfoTopic | { id: string; category_id: string; title: string; slug: string; description: string; content: string; summary: string; tags: never[]; difficulty_level: "beginner"; reading_time_minutes: number; ... 6 more ...; related_topics: never[]; }' is not assignable to type 'InfoTopic'.
+src/components/information/InformationProvider.tsx(327,46): error TS2352: Conversion of type '(event: CustomEvent) => Promise<void>' to type 'EventListener' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+src/components/information/InformationProvider.tsx(329,51): error TS2352: Conversion of type '(event: CustomEvent) => Promise<void>' to type 'EventListener' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+src/components/LivestockForm.tsx(33,13): error TS2769: No overload matches this call.
+src/components/LivestockForm.tsx(36,13): error TS2769: No overload matches this call.
+src/components/LivestockForm.tsx(96,28): error TS2345: Argument of type 'Omit<Breed, "id" | "created_at" | "updated_at">[]' is not assignable to parameter of type 'SetStateAction<Breed[]>'.
+src/components/LivestockForm.tsx(103,24): error TS2345: Argument of type 'Omit<Breed, "id" | "created_at" | "updated_at">[]' is not assignable to parameter of type 'SetStateAction<Breed[]>'.
+src/components/ui/FormFields.tsx(101,7): error TS2339: Property 'onValueChange' does not exist on type 'FormSelectProps'.
+src/components/ui/FormFields.tsx(108,17): error TS2322: Type 'string | number | readonly string[] | undefined' is not assignable to type 'string | undefined'.
+src/components/ui/FormFields.tsx(109,12): error TS2322: Type '{ children: Element; autoComplete?: string | undefined; disabled?: boolean | undefined; form?: string | undefined; multiple?: boolean | undefined; name?: string | undefined; ... 264 more ...; className: string; }' is not assignable to type 'SelectTriggerProps'.
+src/components/ui/UnifiedList.tsx(129,7): error TS2358: The left-hand side of an 'instanceof' expression must be of type 'any', an object type or a type parameter.
+src/components/ui/UnifiedList.tsx(383,15): error TS2484: Export declaration conflicts with exported declaration of 'UnifiedListProps'.
+src/hooks/useFarmingActivities.ts(209,5): error TS2322: Type 'AgroecologicalZone | null | undefined' is not assignable to type 'AgroecologicalZone | null'.
+src/hooks/useInformation.ts(141,11): error TS2353: Object literal may only specify known properties, and 'params' does not exist in type '{ single?: boolean | undefined; }'.
+src/hooks/useInformation.ts(148,22): error TS2339: Property 'data' does not exist on type 'InfoTopicContext'.
+src/hooks/useInformation.ts(148,39): error TS2339: Property 'data' does not exist on type 'InfoTopicContext'.
+src/hooks/useInformation.ts(149,36): error TS2339: Property 'data' does not exist on type 'InfoTopicContext'.
+src/hooks/useInformation.ts(183,11): error TS2353: Object literal may only specify known properties, and 'params' does not exist in type '{ single?: boolean | undefined; }'.
+src/hooks/useInformation.ts(188,22): error TS2339: Property 'data' does not exist on type 'InfoTopic'.
+src/hooks/useInformation.ts(189,35): error TS2339: Property 'data' does not exist on type 'InfoTopic'.
+src/hooks/useInformation.ts(190,27): error TS2339: Property 'data' does not exist on type 'InfoTopic'.
+src/hooks/useInformation.ts(216,25): error TS2339: Property 'data' does not exist on type 'InfoSearchResult[]'.
+src/hooks/useInformation.ts(231,9): error TS2353: Object literal may only specify known properties, and 'params' does not exist in type '{ single?: boolean | undefined; }'.
+src/hooks/useInformation.ts(239,23): error TS2339: Property 'data' does not exist on type 'InfoTopic[]'.
+src/hooks/useInformation.ts(250,9): error TS2353: Object literal may only specify known properties, and 'params' does not exist in type '{ single?: boolean | undefined; }'.
+src/hooks/useInformation.ts(257,23): error TS2339: Property 'data' does not exist on type 'InfoTopic[]'.
+src/hooks/useInformation.ts(279,25): error TS2345: Argument of type '(prev: InfoTopic[]) => (string | InfoTopic)[]' is not assignable to parameter of type 'SetStateAction<InfoTopic[]>'.
+src/hooks/useInformation.ts(280,54): error TS2367: This comparison appears to be unintentional because the types 'InfoTopic' and 'string' have no overlap.
+src/hooks/useInformation.ts(327,29): error TS2339: Property 'data' does not exist on type 'InfoTopic[]'.
+src/hooks/useInformation.ts(328,44): error TS2339: Property 'data' does not exist on type 'InfoTopic[]'.
+src/lib/design-system.ts(345,48): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string | null'.
+src/lib/design-system.ts(354,13): error TS7030: Not all code paths return a value.
+src/lib/error-handling.ts(171,21): error TS2416: Property 'code' in type 'RateLimitError' is not assignable to the same property in base type 'ApiError'.
+src/lib/logging.ts(497,16): error TS18046: 'error' is of type 'unknown'.
+src/lib/logging.ts(509,3): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+src/lib/performance-monitoring.ts(160,54): error TS18048: 'lastEntry' is possibly 'undefined'.
+src/lib/performance-monitoring.ts(591,3): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+src/lib/realtime-hooks.ts(53,9): error TS2769: No overload matches this call.
+src/lib/realtime-hooks.ts(60,50): error TS2344: Type 'T' does not satisfy the constraint '{ [key: string]: any; }'.
+src/lib/realtime-hooks.ts(200,13): error TS2339: Property 'error' does not exist on type 'RealtimeChannelSendResponse'.
+src/lib/responsive-design.ts(59,16): error TS2538: Type 'undefined' cannot be used as an index type.
+src/lib/responsive-design.ts(60,21): error TS2538: Type 'undefined' cannot be used as an index type.
+src/pages/AnalyticsPage.tsx(17,54): error TS2559: Type 'string' has no properties in common with type '{ farm_id?: string | undefined; period?: string | undefined; }'.
+src/pages/AnalyticsPage.tsx(56,12): error TS2741: Property 'items' is missing in type '{ className: string; }' but required in type '{ items: { label: string; href?: string | undefined; }[]; className?: string | undefined; }'.
+src/pages/CropsPage.tsx(87,12): error TS2741: Property 'items' is missing in type '{ className: string; }' but required in type '{ items: { label: string; href?: string | undefined; }[]; className?: string | undefined; }'.
+src/pages/CropsPage.tsx(138,15): error TS2322: Type '{ crops: Crop[]; searchQuery: string; setSearchQuery: Dispatch<SetStateAction<string>>; }' is not assignable to type 'IntrinsicAttributes'.
+src/pages/CropsPage.tsx(145,61): error TS2322: Type '{ farmId: string; }' is not assignable to type 'IntrinsicAttributes'.
+src/pages/CropsPage.tsx(167,27): error TS2551: Property 'crop_type' does not exist on type 'CropVariety'. Did you mean 'cropType'?
+src/pages/Dashboard.tsx(853,46): error TS2322: Type '{ farmId: string; cropType: string; }' is not assignable to type 'IntrinsicAttributes'.
+src/pages/Dashboard.tsx(859,21): error TS2322: Type '{ farmId: string; onEventClick: (event: unknown) => void; onCreateEvent: (date: string) => void; }' is not assignable to type 'IntrinsicAttributes'.
+src/pages/Dashboard.tsx(870,21): error TS2322: Type '{ farmId: string; operations: any; onOperationClick: (operationId: string) => void; }' is not assignable to type 'IntrinsicAttributes'.
+src/pages/FarmsPage.tsx(52,5): error TS2322: Type 'string' is not assignable to type 'number'.
+src/pages/FarmsPage.tsx(381,9): error TS2322: Type '{ isOpen: boolean; onClose: () => void; onComplete: () => void; }' is not assignable to type 'IntrinsicAttributes & FirstTimeSetupProps'.
+src/pages/FieldsPage.tsx(81,9): error TS2353: Object literal may only specify known properties, and 'params' does not exist in type '{ single?: boolean | undefined; }'.
+src/pages/FieldsPage.tsx(94,11): error TS2353: Object literal may only specify known properties, and 'params' does not exist in type '{ single?: boolean | undefined; }'.
+src/pages/FieldsPage.tsx(168,66): error TS2322: Type 'string' is not assignable to type 'number'.
+src/pages/FieldsPage.tsx(180,12): error TS2741: Property 'items' is missing in type '{ className: string; }' but required in type '{ items: { label: string; href?: string | undefined; }[]; className?: string | undefined; }'.
+src/pages/FieldsPage.tsx(250,11): error TS2322: Type '{ children: (false | Element | undefined)[]; isLoading: boolean; error: Error | null; loadingMessage: string; onRetry: () => Promise<void>; empty: boolean; emptyTitle: string; emptyDescription: string; emptyAction: Element; emptyIcon: Element; }' is not assignable to type 'IntrinsicAttributes & LoadingStatesProps & { onRetry?: (() => void) | undefined; loadingMessage?: string | undefined; errorTitle?: string | undefined; errorMessage?: string | undefined; }'.
+src/pages/FieldsPage.tsx(313,15): error TS2322: Type '{ fields: Field[]; selectedFieldId: string | null; onSelectField: (f: any) => void; }' is not assignable to type 'IntrinsicAttributes & FieldMapProps'.
+src/pages/FieldsPage.tsx(314,30): error TS7006: Parameter 'f' implicitly has an 'any' type.
+src/pages/InventoryPage.tsx(24,36): error TS2305: Module '"../components/inventory/types"' has no exported member 'InventoryFormData'.
+src/pages/InventoryPage.tsx(106,59): error TS2339: Property 'resolved' does not exist on type 'InventoryAlert'.
+src/pages/InventoryPage.tsx(143,10): error TS2741: Property 'items' is missing in type '{ className: string; }' but required in type '{ items: { label: string; href?: string | undefined; }[]; className?: string | undefined; }'.
+src/pages/InventoryPage.tsx(205,13): error TS2322: Type '{ inventoryItems: InventoryItem[]; alerts: InventoryAlert[]; lowStockItems: InventoryItem[]; onResolveAlert: (alert: InventoryAlert, resolved: boolean) => Promise<...>; onReorder: (item: any) => void; }' is not assignable to type 'IntrinsicAttributes'.
+src/pages/InventoryPage.tsx(209,24): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/pages/InventoryPage.tsx(217,13): error TS2322: Type 'Dispatch<SetStateAction<InventoryItem | null>>' is not assignable to type '(item: InventoryItem) => void'.
+src/pages/InventoryPage.tsx(218,21): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/pages/InventoryPage.tsx(225,50): error TS2322: Type '{ alerts: InventoryAlert[]; onResolveAlert: (alert: InventoryAlert, resolved: boolean) => Promise<void>; }' is not assignable to type 'IntrinsicAttributes & { alerts: InventoryAlert[]; }'.
+src/pages/InventoryPage.tsx(232,13): error TS2322: Type '{ suppliers: Supplier[]; onAddSupplier: () => void; onEditSupplier: (supplier: any) => void; }' is not assignable to type 'IntrinsicAttributes & { suppliers: Supplier[]; }'.
+src/pages/InventoryPage.tsx(233,29): error TS7006: Parameter 'supplier' implicitly has an 'any' type.
+src/pages/InventoryPage.tsx(238,58): error TS2322: Type '{ inventoryItems: InventoryItem[]; }' is not assignable to type 'IntrinsicAttributes'.
+src/pages/InventoryPage.tsx(243,13): error TS2322: Type 'InventoryItem | null' is not assignable to type 'InventoryItem | null | undefined'.
+src/pages/LivestockPage.tsx(47,61): error TS2304: Cannot find name 'Calendar'.
+src/pages/LivestockPage.tsx(171,12): error TS2741: Property 'items' is missing in type '{ className: string; }' but required in type '{ items: { label: string; href?: string | undefined; }[]; className?: string | undefined; }'.
+src/pages/LivestockPage.tsx(217,53): error TS2322: Type '{ livestock: Livestock[]; }' is not assignable to type 'IntrinsicAttributes'.
+src/pages/LivestockPage.tsx(220,15): error TS2322: Type '{ livestock: Livestock[]; filters: FilterState; setFilters: Dispatch<SetStateAction<FilterState>>; showFilters: boolean; setShowFilters: Dispatch<...>; onEdit: (item: Livestock) => void; onDelete: (item: Livestock) => Promise<...>; }' is not assignable to type 'IntrinsicAttributes'.
+src/pages/LivestockPage.tsx(378,77): error TS2322: Type 'string' is not assignable to type 'number'.
+src/pages/LocationsPage.tsx(76,5): error TS2322: Type 'string' is not assignable to type 'number'.
+src/pages/LocationsPage.tsx(90,76): error TS2554: Expected 0 arguments, but got 1.
+src/pages/LocationsPage.tsx(176,12): error TS2741: Property 'items' is missing in type '{ className: string; }' but required in type '{ items: { label: string; href?: string | undefined; }[]; className?: string | undefined; }'.
+src/pages/LocationsPage.tsx(299,11): error TS2322: Type '{ children: Element; isLoading: boolean; error: Error | null; loadingMessage: string; errorTitle: string; errorMessage: string; onRetry: () => Promise<QueryObserverResult<Location[], Error>>; ... 4 more ...; emptyIcon: Element; }' is not assignable to type 'IntrinsicAttributes & LoadingStatesProps & { onRetry?: (() => void) | undefined; loadingMessage?: string | undefined; errorTitle?: string | undefined; errorMessage?: string | undefined; }'.
+src/pages/QueuePage.tsx(16,12): error TS2741: Property 'items' is missing in type '{ className: string; }' but required in type '{ items: { label: string; href?: string | undefined; }[]; className?: string | undefined; }'.
+src/pages/ResetPasswordPage.tsx(43,22): error TS2339: Property 'timingSafeEqual' does not exist on type 'SubtleCrypto'.
+src/pages/TasksPage.tsx(166,20): error TS2551: Property 'due_date' does not exist on type 'ExtendedTask'. Did you mean 'dueDate'?
+src/pages/TasksPage.tsx(166,46): error TS2551: Property 'due_date' does not exist on type 'ExtendedTask'. Did you mean 'dueDate'?
+src/pages/TasksPage.tsx(174,12): error TS2741: Property 'items' is missing in type '{ className: string; }' but required in type '{ items: { label: string; href?: string | undefined; }[]; className?: string | undefined; }'.
+src/pages/TasksPage.tsx(239,13): error TS2322: Type '{ tasks: ExtendedTask[]; onEditTask: Dispatch<SetStateAction<ExtendedTask | null>>; onStartTimer: (task: ExtendedTask) => void; onStopTimer: (task: ExtendedTask) => void; timerActive: { ...; }; isTimerLoading: boolean; }' is not assignable to type 'IntrinsicAttributes'.
+src/schemas/index.ts(28,5): error TS2322: Type 'true' is not assignable to type 'never'.
+src/services/aiService.ts(49,18): error TS2395: Individual declarations in merged declaration 'AIService' must be all exported or all local.
+src/services/aiService.ts(65,7): error TS2395: Individual declarations in merged declaration 'AIService' must be all exported or all local.

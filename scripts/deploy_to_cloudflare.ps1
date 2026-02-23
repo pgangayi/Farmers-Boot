@@ -1,5 +1,5 @@
 # Deploy to Cloudflare Pages
-# This script deploys the built frontend to Cloudflare Pages with D1 configuration
+# This script deploys built web to Cloudflare Pages with D1 configuration
 # Run: .\scripts\deploy_to_cloudflare.ps1
 
 Write-Host "`n=== Cloudflare Pages Deployment ===" -ForegroundColor Cyan
@@ -12,17 +12,17 @@ $env:CF_API_TOKEN = $null
 
 try {
     # Check if build exists
-    if (-not (Test-Path "frontend/dist")) {
+    if (-not (Test-Path "apps/web/dist")) {
         Write-Host "❌ Build not found. Running build first..." -ForegroundColor Red
         npm run build
         if ($LASTEXITCODE -ne 0) {
             throw "Build failed"
         }
     }
-    
+
     Write-Host "Deploying to Cloudflare Pages..." -ForegroundColor Cyan
-    npx wrangler pages deploy frontend/dist --project-name=farmers-boot
-    
+    npx wrangler pages deploy apps/web/dist --project-name=farmers-boot
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "`n✅ Deployment successful!" -ForegroundColor Green
         Write-Host "`nYour app is live at: https://farmers-boot.pages.dev" -ForegroundColor Cyan
@@ -33,8 +33,8 @@ try {
         Write-Host "1. Go to https://dash.cloudflare.com" -ForegroundColor White
         Write-Host "2. Navigate to Workers & Pages" -ForegroundColor White
         Write-Host "3. Click 'Create application' > 'Pages' > 'Upload assets'" -ForegroundColor White
-        Write-Host "4. Upload the 'frontend/dist' folder" -ForegroundColor White
-        Write-Host "5. In Settings > Functions, bind the D1 database 'farmers_boot'" -ForegroundColor White
+        Write-Host "4. Upload 'apps/web/dist' folder" -ForegroundColor White
+        Write-Host "5. In Settings > Functions, bind D1 database 'farmers_boot'" -ForegroundColor White
     }
 } catch {
     Write-Host "`n❌ Error: $_" -ForegroundColor Red

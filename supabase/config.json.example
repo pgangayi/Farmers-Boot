@@ -1,0 +1,15 @@
+{
+  "project_id": "your-project-id",
+  "rest_api_url": "https://your-project-id.supabase.co/rest/v1",
+  "realtime_url": "wss://your-project-id.supabase.co/realtime/v1",
+  "graphql_url": "https://your-project-id.supabase.co/graphql/v1",
+  "anon_key": "your-anon-key",
+  "service_role_key": "your-service-role-key",
+  "db_url": "postgresql://postgres:your-password@your-project-id.supabase.co:5432/postgres",
+  "db_name": "postgres",
+  "db_user": "postgres",
+  "db_password": "your-password",
+  "db_host": "your-project-id.supabase.co",
+  "db_port": 5432,
+  "region": "your-region"
+}

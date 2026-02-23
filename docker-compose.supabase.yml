@@ -1,0 +1,325 @@
+services:
+  # PostgreSQL Database
+  db:
+    image: supabase/postgres:15.1.1.78
+    container_name: supabase-db
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PORT: 5432
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-token-with-at-least-32-characters-long}
+      JWT_EXPIRY: ${JWT_EXPIRY:-3600}
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-postgres}
+      PGRST_JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-token-with-at-least-32-characters-long}
+      # Enable extensions
+      POSTGRES_INITDB_ARGS: '-E UTF8 --locale=C'
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./supabase/init:/docker-entrypoint-initdb.d
+    ports:
+      - '54322:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - supabase-network
+
+  # Supabase Auth (GoTrue)
+  auth:
+    image: supabase/gotrue:v2.171.0
+    container_name: supabase-auth
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-postgres}
+      GOTRUE_JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-token-with-at-least-32-characters-long}
+      GOTRUE_JWT_EXP: ${JWT_EXPIRY:-3600}
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_SITE_URL: ${SITE_URL:-http://localhost:3000}
+      GOTRUE_URI_ALLOW_LIST: ${URI_ALLOW_LIST:-*}
+      GOTRUE_DISABLE_SIGNUP: ${DISABLE_SIGNUP:-false}
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: ${EXTERNAL_EMAIL_ENABLED:-true}
+      GOTRUE_EXTERNAL_PHONE_ENABLED: ${EXTERNAL_PHONE_ENABLED:-true}
+      GOTRUE_MAILER_AUTOCONFIRM: ${MAILER_AUTOCONFIRM:-false}
+      GOTRUE_SMTP_HOST: ${SMTP_HOST:-inbucket}
+      GOTRUE_SMTP_PORT: ${SMTP_PORT:-2500}
+      GOTRUE_SMTP_USER: ${SMTP_USER:-}
+      GOTRUE_SMTP_PASS: ${SMTP_PASS:-}
+      GOTRUE_SMTP_ADMIN_EMAIL: ${SMTP_ADMIN_EMAIL:-admin@example.com}
+      GOTRUE_RATE_LIMIT_EMAIL_SENT: ${RATE_LIMIT_EMAIL_SENT:-30}
+      GOTRUE_RATE_LIMIT_SMS_SENT: ${RATE_LIMIT_SMS_SENT:-30}
+      GOTRUE_RATE_LIMIT_VERIFY: ${RATE_LIMIT_VERIFY:-5}
+      GOTRUE_RATE_LIMIT_TOKEN_REFRESH: ${RATE_LIMIT_TOKEN_REFRESH:-10}
+    # Handled by Kong on 54321/auth/v1
+    expose:
+      - '9999'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9999/health']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - supabase-network
+
+  # PostgREST API
+  api:
+    image: postgrest/postgrest:v12.2.0
+    container_name: supabase-api
+    depends_on:
+      db:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-postgres}
+      PGRST_DB_SCHEMAS: ${DB_SCHEMAS:-public,storage,graphql_public}
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-token-with-at-least-32-characters-long}
+      PGRST_SERVER_PORT: 3000
+      PGRST_SERVER_HOST: 0.0.0.0
+      PGRST_MAX_ROWS: ${MAX_ROWS:-1000}
+      PGRST_PREPARED_STATEMENTS: true
+    # Handled by Kong on 54321/rest/v1
+    expose:
+      - '3000'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - supabase-network
+
+  # Kong API Gateway
+  kong:
+    image: kong:3.4.0-ubuntu
+    container_name: supabase-kong
+    depends_on:
+      api:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+    environment:
+      KONG_DATABASE: 'off'
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_ADMIN_GUI_URL: http://localhost:8002
+      # Custom configuration for Supabase
+      KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: 160k
+      KONG_NGINX_PROXY_PROXY_BUFFERS: 64 160k
+    volumes:
+      - ./supabase/kong.yml:/kong/declarative/kong.yml:ro
+    ports:
+      - '54321:8000'
+      - '8001:8001'
+      - '8443:8443'
+      - '8444:8444'
+    healthcheck:
+      test: ['CMD', 'kong', 'health']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - supabase-network
+
+  # Supabase Studio
+  studio:
+    image: supabase/studio:latest
+    container_name: supabase-studio
+    depends_on:
+      api:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+    environment:
+      STUDIO_PG_META_URL: http://meta:8080
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DEFAULT_ORGANIZATION_NAME: ${ORGANIZATION_NAME:-Farmers Boot}
+      DEFAULT_PROJECT_NAME: ${PROJECT_NAME:-Farmers Boot Project}
+      SUPABASE_URL: http://kong:8000
+      SUPABASE_PUBLIC_URL: ${SUPABASE_PUBLIC_URL:-http://localhost:8000}
+      SUPABASE_ANON_KEY: ${ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0}
+      SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU}
+    ports:
+      - '54323:3000'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/api/profile']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - supabase-network
+
+  # PostgREST Meta
+  meta:
+    image: supabase/postgres-meta:v0.80.0
+    container_name: supabase-meta
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PG_META_PORT: 8080
+      PG_META_DB_HOST: db
+      PG_META_DB_PORT: 5432
+      PG_META_DB_NAME: ${POSTGRES_DB:-postgres}
+      PG_META_DB_USER: postgres
+      PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - '8080:8080'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8080/health']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - supabase-network
+
+  # Supabase Realtime
+  realtime:
+    image: supabase/realtime:v2.33.72
+    container_name: supabase-realtime
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 4000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DB_NAME: ${POSTGRES_DB:-postgres}
+      DB_AFTER_CONNECT_QUERY: 'SET search_path TO realtime'
+      DB_ENC_KEY: ${REALTIME_ENC_KEY:-supabaserealtime}
+      API_JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-token-with-at-least-32-characters-long}
+      FLY_ALLOC_ID: fly123
+      FLY_APP_NAME: realtime
+      FLY_REGION: iad
+      SECRET_KEY_BASE: ${REALTIME_SECRET_KEY:-NVb2fsJpC0wQjpF4Hq0M5jK2qL9rR7sT3vY6xZ8aB1cD4eF5gH6iJ7kL8mN9oP0qR}
+      ERL_AFLAGS: -proto_dist inet_tcp
+      ENABLE_TAILSCALE: 'false'
+      DNS_NODES: ''
+    command: >
+      sh -c "/app/bin/migrate && /app/bin/realtime eval 'Realtime.Release.seeds(Realtime.Repo)' && /app/bin/server"
+    ports:
+      - '4000:4000'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:4000/api/health']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - supabase-network
+
+  # Supabase Storage
+  storage:
+    image: supabase/storage-api:v0.48.4
+    container_name: supabase-storage
+    depends_on:
+      db:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+    environment:
+      ANON_KEY: ${ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0}
+      SERVICE_KEY: ${SERVICE_ROLE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU}
+      POSTGREST_URL: http://api:3000
+      PGRST_JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-token-with-at-least-32-characters-long}
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-postgres}
+      FILE_SIZE_LIMIT: 52428800
+      TENANT_ID: stub
+      REGION: stub
+      GLOBAL_S3_BUCKET: stub
+    ports:
+      - '5000:5000'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:5000/status']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - supabase-network
+
+  # Inbucket (Email Testing)
+  inbucket:
+    image: inbucket/inbucket:3.0.0
+    container_name: supabase-inbucket
+    environment:
+      INBUCKET_PORT: 9000
+      INBUCKET_SMTP_PORT: 2500
+      INBUCKET_POP3_PORT: 1100
+      INBUCKET_STORAGE_PATH: /storage
+      INBUCKET_ACCEPT_SIZE: 10240000
+      INBUCKET_MAILBOX_MSG_CAP: 500
+      INBUCKET_DOMAIN: example.com
+    ports:
+      - '9000:9000'
+      - '2500:2500'
+      - '1100:1100'
+    volumes:
+      - inbucket_data:/storage
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/monitor']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - supabase-network
+
+  # Vector (pgvector extension for AI/ML)
+  vector:
+    image: pgvector/pgvector:pg15
+    container_name: supabase-vector
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+      POSTGRES_USER: postgres
+    volumes:
+      - vector_data:/var/lib/postgresql/data
+    ports:
+      - '5433:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - supabase-network
+
+  # Gotrue Migrations
+  gotrue-migrations:
+    image: supabase/gotrue:v2.171.0
+    container_name: supabase-gotrue-migrations
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-postgres}
+    command: ['gotrue', 'migrate']
+    networks:
+      - supabase-network
+
+volumes:
+  db_data:
+    driver: local
+  inbucket_data:
+    driver: local
+  vector_data:
+    driver: local
+
+networks:
+  supabase-network:
+    driver: bridge
