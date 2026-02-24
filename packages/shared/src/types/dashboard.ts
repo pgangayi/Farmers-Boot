@@ -14,7 +14,7 @@ export type ColorVariant =
   | 'red'
   | 'amber';
 
-// Re-export entity types from entities.ts for convenience
+// Re-export entity types from database-types.ts for convenience
 export type {
   Farm,
   Crop,
@@ -31,7 +31,7 @@ export type {
   PaginatedResponse,
   ListOptions,
   ApiErrorResponse,
-} from './entities';
+} from './database-types';
 
 // Component interfaces
 import type { ComponentType } from 'react';

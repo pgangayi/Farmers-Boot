@@ -168,7 +168,7 @@ export class ApiError extends BaseError {
 }
 
 export class RateLimitError extends ApiError {
-  override readonly code = 'RATE_LIMIT' as const;
+  override readonly code: string = 'RATE_LIMIT';
   override readonly statusCode = 429;
 
   constructor(

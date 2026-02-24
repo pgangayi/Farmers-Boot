@@ -82,8 +82,8 @@ export function CropForm({ initialData, onSubmit, onCancel, isLoading = false }:
   } = useForm<CropFormData>({
     resolver: zodResolver(cropSchema),
     defaultValues: {
-      is_active: true,
-      ...initialData,
+      ...(initialData as CropFormData),
+      is_active: initialData?.is_active ?? true,
     },
   });
 

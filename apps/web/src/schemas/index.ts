@@ -103,15 +103,17 @@ export const animal_schema = z.object({
   species: z.string().min(1).max(100),
   breed: z.string().max(100).optional(),
   date_of_birth: z.string().date().optional(),
-  sex: z.enum(['male', 'female']).optional(),
+  sex: z.enum(['male', 'female', 'unknown']).optional(),
   identification_tag: z.string().max(50).optional(),
-  status: z.enum(['active', 'sold', 'deceased', 'transferred']).default('active'),
+  status: z
+    .enum(['active', 'healthy', 'sick', 'sold', 'deceased', 'pregnant', 'quarantine'])
+    .default('active'),
   health_status: z.enum(['healthy', 'sick', 'recovering', 'critical']).default('healthy'),
   current_weight: z.number().positive().optional(),
   notes: z.string().max(1000).optional(),
   location_id: z.string().optional(),
   acquisition_date: z.string().date().optional(),
-  acquisition_type: z.enum(['born', 'purchased', 'gift', 'rescue']).optional(),
+  acquisition_type: z.enum(['born', 'purchased', 'gift', 'rescue', 'other']).optional(),
 });
 
 export const create_animal_schema = animal_schema.pick({
@@ -185,7 +187,7 @@ export const task_schema = z.object({
   description: z.string().max(1000).optional(),
   assigned_to: z.string().optional(),
   status: z.enum(['pending', 'in_progress', 'completed', 'cancelled']).default('pending'),
-  priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),
+  priority: z.enum(['low', 'medium', 'normal', 'high', 'urgent']).default('normal'),
   due_date: z.string().datetime().optional(),
   completed_at: z.string().datetime().optional(),
   task_type: z

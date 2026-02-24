@@ -61,6 +61,18 @@ const STATUS_CONFIG: Record<
     bgColor: 'bg-green-100',
     icon: <CheckCircle className="w-4 h-4" />,
   },
+  healthy: {
+    label: 'Healthy',
+    color: 'text-green-700',
+    bgColor: 'bg-green-100',
+    icon: <CheckCircle className="w-4 h-4" />,
+  },
+  sick: {
+    label: 'Sick',
+    color: 'text-red-700',
+    bgColor: 'bg-red-100',
+    icon: <AlertTriangle className="w-4 h-4" />,
+  },
   sold: {
     label: 'Sold',
     color: 'text-blue-700',
@@ -72,6 +84,12 @@ const STATUS_CONFIG: Record<
     color: 'text-gray-700',
     bgColor: 'bg-gray-100',
     icon: <AlertTriangle className="w-4 h-4" />,
+  },
+  pregnant: {
+    label: 'Pregnant',
+    color: 'text-purple-700',
+    bgColor: 'bg-purple-100',
+    icon: <Heart className="w-4 h-4" />,
   },
   quarantine: {
     label: 'Quarantine',

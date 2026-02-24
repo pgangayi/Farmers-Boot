@@ -117,20 +117,125 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
+    // Enable minification with terser for better tree-shaking
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        // Remove console.log in production
+        drop_console: true,
+        drop_debugger: true,
+        // Remove pure functions
+        pure_funcs: ['console.log', 'console.info', 'console.debug'],
+      },
+      format: {
+        // Remove comments
+        comments: false,
+      },
+    },
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          router: ['react-router-dom'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-slot'],
-          maps: ['mapbox-gl'],
-          utils: ['date-fns', 'clsx', 'tailwind-merge'],
-          query: ['@tanstack/react-query'],
-          validation: ['zod'],
-          icons: ['lucide-react'],
+        // Optimized chunk splitting strategy
+        manualChunks: id => {
+          // Vendor chunk - React core
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
+            return 'react-vendor';
+          }
+
+          // Router chunk
+          if (id.includes('node_modules/react-router-dom/')) {
+            return 'router';
+          }
+
+          // UI libraries - split by library
+          if (id.includes('node_modules/@radix-ui/')) {
+            return 'radix-ui';
+          }
+
+          if (id.includes('node_modules/@mui/')) {
+            // Split MUI into smaller chunks
+            if (id.includes('@mui/material')) {
+              return 'mui-material';
+            }
+            if (id.includes('@mui/icons-material')) {
+              return 'mui-icons';
+            }
+            if (id.includes('@mui/x-data-grid')) {
+              return 'mui-data-grid';
+            }
+            if (id.includes('@mui/x-date-pickers')) {
+              return 'mui-date-pickers';
+            }
+            return 'mui-other';
+          }
+
+          // Maps - large library, separate chunk
+          if (id.includes('node_modules/mapbox-gl/')) {
+            return 'mapbox';
+          }
+
+          // Charts
+          if (id.includes('node_modules/recharts/')) {
+            return 'charts';
+          }
+
+          // Query/TanStack
+          if (id.includes('node_modules/@tanstack/')) {
+            return 'tanstack';
+          }
+
+          // Utilities
+          if (
+            id.includes('node_modules/date-fns/') ||
+            id.includes('node_modules/clsx/') ||
+            id.includes('node_modules/tailwind-merge/')
+          ) {
+            return 'utils';
+          }
+
+          // Validation
+          if (id.includes('node_modules/zod/')) {
+            return 'validation';
+          }
+
+          // Icons
+          if (id.includes('node_modules/lucide-react/')) {
+            return 'icons';
+          }
+
+          // State management
+          if (id.includes('node_modules/zustand/')) {
+            return 'state';
+          }
+
+          // Database/Offline
+          if (id.includes('node_modules/dexie/')) {
+            return 'database';
+          }
+
+          // Drag and drop
+          if (id.includes('node_modules/@hello-pangea/dnd/')) {
+            return 'dnd';
+          }
+
+          // Supabase
+          if (id.includes('node_modules/@supabase/')) {
+            return 'supabase';
+          }
+
+          // Sentry
+          if (id.includes('node_modules/@sentry/')) {
+            return 'sentry';
+          }
+
+          // Other node_modules
+          if (id.includes('node_modules/')) {
+            return 'vendor';
+          }
         },
       },
     },
+    // Chunk size warnings
+    chunkSizeWarningLimit: 500,
   },
   server: {
     port: 5000,
@@ -161,6 +266,18 @@ export default defineConfig({
   },
   optimizeDeps: {
     exclude: ['@vite/client', '@vite/env'],
+    // Include commonly used dependencies for pre-bundling
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@tanstack/react-query',
+      'zustand',
+      'date-fns',
+      'zod',
+      'clsx',
+      'tailwind-merge',
+    ],
   },
   preview: {
     port: 5173,

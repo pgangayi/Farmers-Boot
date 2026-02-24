@@ -128,7 +128,8 @@ export function CropsOverview({ farmId, className = '', onCropSelect }: CropsOve
 
     const byStatus = crops.reduce(
       (acc, crop) => {
-        acc[crop.status] = (acc[crop.status] || 0) + 1;
+        const status = crop.status || 'planned';
+        acc[status] = (acc[status] || 0) + 1;
         return acc;
       },
       {} as Record<string, number>

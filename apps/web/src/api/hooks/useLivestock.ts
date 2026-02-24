@@ -235,9 +235,11 @@ export function useCreateHealthRecord() {
       });
     },
     onSuccess: (_, variables) => {
-      if ((variables as any).livestock_id) {
+      const animalId = (variables as CreateRequest<AnimalHealth> & { animal_id?: string })
+        .animal_id;
+      if (animalId) {
         queryClient.invalidateQueries({
-          queryKey: LIVESTOCK_QUERY_KEYS.health((variables as any).livestock_id),
+          queryKey: LIVESTOCK_QUERY_KEYS.health(animalId),
         });
       }
     },
@@ -305,11 +307,10 @@ export function useCreateProductionRecord() {
       });
     },
     onSuccess: (_, variables) => {
-      if ((variables as any).livestock_id || (variables as any).animal_id) {
+      const livestockId = (variables as CreateRequest<ProductionRecord>).livestock_id;
+      if (livestockId) {
         queryClient.invalidateQueries({
-          queryKey: LIVESTOCK_QUERY_KEYS.production(
-            (variables as any).livestock_id || (variables as any).animal_id
-          ),
+          queryKey: LIVESTOCK_QUERY_KEYS.production(livestockId),
         });
       }
     },
@@ -352,11 +353,10 @@ export function useCreateBreedingRecord() {
       });
     },
     onSuccess: (_, variables) => {
-      if ((variables as any).livestock_id || (variables as any).animal_id) {
+      const livestockId = (variables as CreateRequest<BreedingRecord>).livestock_id;
+      if (livestockId) {
         queryClient.invalidateQueries({
-          queryKey: LIVESTOCK_QUERY_KEYS.breeding(
-            (variables as any).livestock_id || (variables as any).animal_id
-          ),
+          queryKey: LIVESTOCK_QUERY_KEYS.breeding(livestockId),
         });
       }
     },
@@ -395,7 +395,8 @@ export function useLivestockStats(farm_id?: string) {
         total: livestock.length,
         by_species: livestock.reduce(
           (acc, animal) => {
-            acc[animal.species] = (acc[animal.species] || 0) + 1;
+            const species = animal.type || 'unknown';
+            acc[species] = (acc[species] || 0) + 1;
             return acc;
           },
           {} as Record<string, number>

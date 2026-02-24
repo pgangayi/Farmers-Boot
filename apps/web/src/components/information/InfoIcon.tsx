@@ -169,16 +169,12 @@ export function InfoIcon({
       </div>
 
       {/* Hover effect for tooltip */}
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
+      <style>{`
         button:hover + div[role='tooltip'] {
           opacity: 1;
           pointer-events: auto;
         }
-      `,
-        }}
-      />
+      `}</style>
     </div>
   );
 }

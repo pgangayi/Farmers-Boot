@@ -379,7 +379,9 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
     }
 
     // Navigate to result
-    navigate(result.url);
+    if (result) {
+      navigate(result.url);
+    }
     setIsOpen(false);
     setQuery('');
     setResults([]);

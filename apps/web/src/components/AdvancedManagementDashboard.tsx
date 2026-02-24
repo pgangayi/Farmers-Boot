@@ -109,13 +109,14 @@ const AdvancedManagementDashboard: React.FC<AdvancedManagementDashboardProps> = 
     refetch: refetchKpis,
   } = useQuery<KPI[]>({
     queryKey: ['kpis', selectedTimeRange, selectedDepartment, farmId],
-    queryFn: async () => {
+    queryFn: async (): Promise<KPI[]> => {
       const params = new URLSearchParams({
         time_range: selectedTimeRange,
         department: selectedDepartment,
         ...(farmId && { farm_id: farmId }),
       });
-      return await apiClient.get<KPI[]>(`/dashboard/kpis?${params}`);
+      const result = await apiClient.get<KPI[]>(`/dashboard/kpis?${params}`);
+      return result || [];
     },
   });
 
@@ -126,12 +127,13 @@ const AdvancedManagementDashboard: React.FC<AdvancedManagementDashboardProps> = 
     refetch: refetchActivities,
   } = useQuery<ActivityItem[]>({
     queryKey: ['activities', selectedTimeRange, farmId],
-    queryFn: async () => {
+    queryFn: async (): Promise<ActivityItem[]> => {
       const params = new URLSearchParams({
         time_range: selectedTimeRange,
         ...(farmId && { farm_id: farmId }),
       });
-      return await apiClient.get<ActivityItem[]>(`/dashboard/activities?${params}`);
+      const result = await apiClient.get<ActivityItem[]>(`/dashboard/activities?${params}`);
+      return result || [];
     },
   });
 
@@ -142,9 +144,10 @@ const AdvancedManagementDashboard: React.FC<AdvancedManagementDashboardProps> = 
     refetch: refetchResources,
   } = useQuery<ResourceUtilization[]>({
     queryKey: ['resources', farmId],
-    queryFn: async () => {
+    queryFn: async (): Promise<ResourceUtilization[]> => {
       const params = farmId ? `?farm_id=${farmId}` : '';
-      return await apiClient.get<ResourceUtilization[]>(`/dashboard/resources${params}`);
+      const result = await apiClient.get<ResourceUtilization[]>(`/dashboard/resources${params}`);
+      return result || [];
     },
   });
 
@@ -454,7 +457,7 @@ const AdvancedManagementDashboard: React.FC<AdvancedManagementDashboardProps> = 
             </label>
             <Select
               value={selectedTimeRange}
-              onValueChange={v => setSelectedTimeRange(v as '24h' | '7d' | '30d' | '90d')}
+              onValueChange={(v: string) => setSelectedTimeRange(v as '24h' | '7d' | '30d' | '90d')}
             >
               <SelectTrigger className="w-32" title="Select time range">
                 <SelectValue />

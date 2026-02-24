@@ -137,21 +137,21 @@ export function useInformation(config: Partial<InformationConfig> = {}) {
         const cached = getCachedTopic(cacheKey);
         if (cached) return cached;
 
-        const response = await apiClient.get<InfoTopicContext>('info_topic_contexts', {
-          params: {
-            page_path: `eq.${params.pagePath}`,
-            context_key: `eq.${params.contextKey}`,
-            is_active: `eq.${true}`,
-          },
-        });
+        const response = await apiClient.get<InfoTopicContext[]>(
+          `info_topic_contexts?page_path=eq.${params.pagePath}&context_key=eq.${params.contextKey}&is_active=eq.true`
+        );
 
-        if (response && (response as any).length > 0) {
-          const context = (response as any)[0];
-          let topic = context.topic;
+        if (response && response.length > 0) {
+          const context = response[0] as InfoTopicContext & {
+            topic?: InfoTopic;
+            topic_id?: string;
+          };
+          let topic: InfoTopic | null | undefined = context.topic;
 
           // If topic is not included, fetch it separately
           if (!topic && context.topic_id) {
-            topic = await getTopicById(context.topic_id);
+            const fetchedTopic = await getTopicById(context.topic_id);
+            topic = fetchedTopic;
           }
 
           if (topic) {

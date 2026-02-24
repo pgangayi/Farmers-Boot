@@ -6,7 +6,6 @@
 
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Badge } from '../ui/badge';
 import { useTasks } from '../../api/hooks/useTasks';
 import { useFarms } from '../../api/hooks/useFarms';
 import type { Task, TaskStatus, TaskPriority } from '../../api/types';
@@ -30,7 +29,6 @@ import {
 import {
   TrendingUp,
   TrendingDown,
-  CheckCircle,
   Clock,
   AlertTriangle,
   ListTodo,
@@ -57,6 +55,7 @@ const STATUS_COLORS: Record<TaskStatus, string> = {
 
 const PRIORITY_COLORS: Record<TaskPriority, string> = {
   low: '#9ca3af',
+  medium: '#6366f1',
   normal: '#3b82f6',
   high: '#f59e0b',
   urgent: '#ef4444',
@@ -73,6 +72,7 @@ const STATUS_CONFIG: Record<TaskStatus, { label: string; color: string }> = {
 
 const PRIORITY_CONFIG: Record<TaskPriority, { label: string; color: string }> = {
   low: { label: 'Low', color: 'text-gray-600' },
+  medium: { label: 'Medium', color: 'text-indigo-600' },
   normal: { label: 'Normal', color: 'text-blue-600' },
   high: { label: 'High', color: 'text-amber-600' },
   urgent: { label: 'Urgent', color: 'text-red-600' },

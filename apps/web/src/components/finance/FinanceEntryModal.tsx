@@ -38,7 +38,6 @@ const STATUS_OPTIONS = [
   { value: 'pending', label: 'Pending' },
   { value: 'completed', label: 'Completed' },
   { value: 'cancelled', label: 'Cancelled' },
-  { value: 'draft', label: 'Draft' },
 ];
 
 interface FinanceEntryModalProps {

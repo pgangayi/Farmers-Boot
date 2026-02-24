@@ -3,13 +3,24 @@
  * SUPABASE EDGE FUNCTIONS - MAIN INDEX
  * ============================================================================
  * This file serves as the entry point for all Supabase Edge Functions.
- * It routes requests to the appropriate function handlers.
+ * It routes requests to the appropriate function handlers with API versioning.
+ *
+ * API Versioning:
+ * - URL-based: /v1/auth, /v2/auth, etc.
+ * - Header-based: X-API-Version header
+ * - Default version: v1
  * ============================================================================
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { corsHeaders } from './_shared/cors.ts';
 import { errorHandler } from './_shared/error-handler.ts';
+import {
+  extractApiVersion,
+  addVersionHeaders,
+  API_VERSION,
+  type ApiVersion,
+} from './_shared/api-versioning.ts';
 
 // Import function handlers
 import { handleAuthRequest } from './auth/index.ts';
@@ -31,6 +42,33 @@ import { handleSearchRequest } from './search/index.ts';
 import { handleAuditRequest } from './audit/index.ts';
 import { handleLocationsRequest } from './locations/index.ts';
 
+// Route configuration
+interface RouteConfig {
+  prefix: string;
+  handler: (req: Request, version: ApiVersion) => Promise<Response>;
+}
+
+const routes: RouteConfig[] = [
+  { prefix: '/auth', handler: handleAuthRequest },
+  { prefix: '/farms', handler: handleFarmsRequest },
+  { prefix: '/fields', handler: handleFieldsRequest },
+  { prefix: '/crops', handler: handleCropsRequest },
+  { prefix: '/livestock', handler: handleLivestockRequest },
+  { prefix: '/inventory', handler: handleInventoryRequest },
+  { prefix: '/equipment', handler: handleEquipmentRequest },
+  { prefix: '/tasks', handler: handleTasksRequest },
+  { prefix: '/finance', handler: handleFinanceRequest },
+  { prefix: '/weather', handler: handleWeatherRequest },
+  { prefix: '/notifications', handler: handleNotificationsRequest },
+  { prefix: '/reports', handler: handleReportsRequest },
+  { prefix: '/upload', handler: handleUploadRequest },
+  { prefix: '/webhooks', handler: handleWebhooksRequest },
+  { prefix: '/ai', handler: handleAIRequest },
+  { prefix: '/search', handler: handleSearchRequest },
+  { prefix: '/audit', handler: handleAuditRequest },
+  { prefix: '/locations', handler: handleLocationsRequest },
+];
+
 serve(async (req) => {
   try {
     // Handle CORS preflight requests
@@ -39,55 +77,48 @@ serve(async (req) => {
     }
 
     const url = new URL(req.url);
-    const path = url.pathname;
+    const pathname = url.pathname;
+
+    // Extract API version from URL
+    const { version, path } = extractApiVersion(pathname);
+    const apiVersion = version || API_VERSION;
 
     // Route requests to appropriate handlers
-    let response;
+    let response: Response | null = null;
 
-    if (path.startsWith('/auth/')) {
-      response = await handleAuthRequest(req);
-    } else if (path.startsWith('/farms/')) {
-      response = await handleFarmsRequest(req);
-    } else if (path.startsWith('/fields/')) {
-      response = await handleFieldsRequest(req);
-    } else if (path.startsWith('/crops/')) {
-      response = await handleCropsRequest(req);
-    } else if (path.startsWith('/livestock/')) {
-      response = await handleLivestockRequest(req);
-    } else if (path.startsWith('/inventory/')) {
-      response = await handleInventoryRequest(req);
-    } else if (path.startsWith('/equipment/')) {
-      response = await handleEquipmentRequest(req);
-    } else if (path.startsWith('/tasks/')) {
-      response = await handleTasksRequest(req);
-    } else if (path.startsWith('/finance/')) {
-      response = await handleFinanceRequest(req);
-    } else if (path.startsWith('/weather/')) {
-      response = await handleWeatherRequest(req);
-    } else if (path.startsWith('/notifications/')) {
-      response = await handleNotificationsRequest(req);
-    } else if (path.startsWith('/reports/')) {
-      response = await handleReportsRequest(req);
-    } else if (path.startsWith('/upload/')) {
-      response = await handleUploadRequest(req);
-    } else if (path.startsWith('/webhooks/')) {
-      response = await handleWebhooksRequest(req);
-    } else if (path.startsWith('/ai/')) {
-      response = await handleAIRequest(req);
-    } else if (path.startsWith('/search/')) {
-      response = await handleSearchRequest(req);
-    } else if (path.startsWith('/audit/')) {
-      response = await handleAuditRequest(req);
-    } else if (path.startsWith('/locations/')) {
-      response = await handleLocationsRequest(req);
-    } else {
+    for (const route of routes) {
+      if (path.startsWith(route.prefix)) {
+        response = await route.handler(req, apiVersion);
+        break;
+      }
+    }
+
+    if (!response) {
       response = new Response(
-        JSON.stringify({ error: 'Not Found', message: 'The requested endpoint does not exist' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({
+          error: 'Not Found',
+          message: 'The requested endpoint does not exist',
+          version: apiVersion,
+        }),
+        {
+          status: 404,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+          },
+        }
       );
     }
 
-    return response;
+    // Add version headers to all responses
+    const responseHeaders = new Headers(response.headers);
+    addVersionHeaders(responseHeaders);
+
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: responseHeaders,
+    });
   } catch (error) {
     return errorHandler(error, req);
   }

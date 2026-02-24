@@ -10,7 +10,7 @@ export type { FinanceRecord, FinanceEntry, FinanceSummary } from '../../api/type
 // Transaction types
 export type TransactionType = 'income' | 'expense';
 
-export type FinanceStatus = 'pending' | 'completed' | 'cancelled' | 'draft';
+export type FinanceStatus = 'pending' | 'completed' | 'cancelled';
 
 // Budget categories
 export type BudgetCategory =
