@@ -108,6 +108,15 @@ vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-anon-key');
 vi.stubEnv('VITE_APP_URL', 'http://localhost:3000');
 vi.stubEnv('VITE_API_URL', 'http://localhost:8787');
 
+// newly required vars
+vi.stubEnv('VITE_API_BASE_URL', 'http://localhost:8787/rest/v1');
+vi.stubEnv('VITE_API_TIMEOUT_MS', '30000');
+vi.stubEnv('VITE_API_RETRY_ATTEMPTS', '3');
+vi.stubEnv('VITE_APP_VERSION', '0.1.0');
+// OTLP keys may not always be needed but stub to keep loader happy
+vi.stubEnv('VITE_OTLP_API_KEY', 'fake-key');
+vi.stubEnv('VITE_OTLP_ENDPOINT', 'http://localhost:4318');
+
 // ============================================================================
 // BROWSER API MOCKS
 // ============================================================================

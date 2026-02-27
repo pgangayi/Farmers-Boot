@@ -25,11 +25,49 @@ try {
     exit 1
 }
 
-# Check if .env file exists
+# Check if supabase config file exists and copy it for local overrides
 $envFile = "supabase/.env"
 if (-not (Test-Path $envFile)) {
     Write-Host "Creating .env file from supabase/.env..." -ForegroundColor Yellow
     Copy-Item supabase/.env .env.supabase.local -Force
+}
+
+# ensure API_EXTERNAL_URL is present for the auth container
+if (Test-Path $envFile) {
+    $content = Get-Content $envFile
+    if (-not ($content -match '^API_EXTERNAL_URL=')) {
+        Write-Host "Adding default API_EXTERNAL_URL to supabase/.env" -ForegroundColor Yellow
+        Add-Content $envFile "API_EXTERNAL_URL=http://localhost:54321"
+    }
+}
+
+# --------------------------------------------------------------------------
+# Inject environment variables needed by the web frontend.  The local supabase
+# docker environment writes its settings to supabase/.env; copy the public URL
+# and anon key into the web project's .env.local so Vite can consume them.
+# --------------------------------------------------------------------------
+$webEnvFile = "apps/web/.env.local"
+
+if (Test-Path $envFile) {
+    # read relevant entries from supabase/.env
+    $lines = Get-Content $envFile | Where-Object { $_ -match '^(SUPABASE_PUBLIC_URL|ANON_KEY)=' }
+    $map = @{}
+    foreach ($line in $lines) {
+        if ($line -match '^SUPABASE_PUBLIC_URL=(.*)$') { $map['VITE_SUPABASE_URL'] = $matches[1] }
+        elseif ($line -match '^ANON_KEY=(.*)$') { $map['VITE_SUPABASE_ANON_KEY'] = $matches[1] }
+    }
+
+    if ($map.Count -gt 0) {
+        Write-Host "Updating web app environment file with Supabase values..." -ForegroundColor Yellow
+        # ensure directory exists
+        $null = New-Item -ItemType File -Force -Path $webEnvFile
+        foreach ($k in $map.Keys) {
+            # remove existing line if present and append new value
+            (Get-Content $webEnvFile | Where-Object { $_ -notmatch "^$k=" }) |
+                Set-Content $webEnvFile
+            Add-Content $webEnvFile "$k=$($map[$k])"
+        }
+    }
 }
 
 # Pull latest images (optional, can be skipped for faster startup)

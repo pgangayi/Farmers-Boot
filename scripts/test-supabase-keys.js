@@ -9,6 +9,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { requireEnv } from './env.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -140,9 +141,15 @@ async function run() {
 
   const env = loadEnvFiles();
 
+  // enforce at least the primary url is present; other keys validated later
+  const url = env.SUPABASE_URL || env.VITE_SUPABASE_URL || env.supabaseUrl || env.vite_supabase_url;
+  if (!url) {
+    console.error('❌ No SUPABASE_URL found in environment or .env files');
+    process.exit(1);
+  }
+
   const candidates = {
-    SUPABASE_URL:
-      env.SUPABASE_URL || env.VITE_SUPABASE_URL || env.supabaseUrl || env.vite_supabase_url || '',
+    SUPABASE_URL: url,
     SUPABASE_ANON_KEY:
       env.SUPABASE_ANON_KEY ||
       env.VITE_SUPABASE_ANON_KEY ||

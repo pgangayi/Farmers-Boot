@@ -9,13 +9,25 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
+
+function requireEnv(key) {
+  const v = process.env[key];
+  if (v == null || v === '') {
+    throw new Error(`environment variable ${key} is required`);
+  }
+  return v;
+}
+
+// ports can still have sensible defaults for local development, but we
+// encourage setting them explicitly in a `.env` file and loading via
+// node (e.g. using dotenv) before starting this script.
 const FRONTEND_PORT = process.env.FRONTEND_PORT || process.env.PORT || 5000;
 const BACKEND_PORT = process.env.BACKEND_PORT || 5757;
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Backend Service URLs
-const KONG_URL = process.env.KONG_URL || 'http://localhost:54321';
-const FUNCTIONS_URL = process.env.FUNCTIONS_URL || 'http://localhost:8000'; // Default for local edge runtime
+// Backend service URLs are mandatory because the proxy depends on them.
+const KONG_URL = requireEnv('KONG_URL');
+const FUNCTIONS_URL = requireEnv('FUNCTIONS_URL'); // local edge runtime default should be set explicitly
 
 // Security headers middleware
 app.use((req, res, next) => {

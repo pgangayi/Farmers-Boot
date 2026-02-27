@@ -49,11 +49,15 @@ export interface SpanAttributes {
 // CONFIGURATION
 // ============================================================================
 
+import { requiredEnv, envOrDefault } from '../utils/env';
+
 const defaultConfig: TelemetryConfig = {
   serviceName: 'farmers-boot-web',
-  serviceVersion: import.meta.env.VITE_APP_VERSION || '0.1.0',
-  environment: import.meta.env.MODE || 'development',
-  otlpEndpoint: import.meta.env.VITE_OTLP_ENDPOINT,
+  serviceVersion: requiredEnv('VITE_APP_VERSION'),
+  // `MODE` is injected by Vite and is always defined, but we still treat
+  // it as required so the behaviour is predictable.
+  environment: requiredEnv('MODE'),
+  otlpEndpoint: import.meta.env.VITE_OTLP_ENDPOINT as string | undefined,
   enableConsoleExporter: import.meta.env.DEV,
   samplingRate: import.meta.env.PROD ? 0.1 : 1.0, // 10% in prod, 100% in dev
 };
@@ -89,15 +93,15 @@ export function initTelemetry(config: Partial<TelemetryConfig> = {}): void {
 
   // Add OTLP exporter for production
   if (finalConfig.otlpEndpoint) {
+    const apiKey = requiredEnv('VITE_OTLP_API_KEY');
     const otlpExporter = new OTLPTraceExporter({
       url: `${finalConfig.otlpEndpoint}/v1/traces`,
       headers: {
-        'api-key': import.meta.env.VITE_OTLP_API_KEY || '',
+        'api-key': apiKey,
       },
     });
     tracerProvider.addSpanProcessor(new BatchSpanProcessor(otlpExporter));
   }
-
   // Add console exporter for development
   if (finalConfig.enableConsoleExporter) {
     const consoleExporter = new ConsoleSpanExporter();

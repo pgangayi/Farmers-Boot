@@ -156,6 +156,12 @@ POSTGRES_USER=postgres
 JWT_SECRET=your-super-secret-jwt-token-with-at-least-32-characters-long
 JWT_EXPIRY=3600
 
+# Auth configuration
+# GoTrue requires an external URL to operate; without API_EXTERNAL_URL the
+# auth container will crash.  Set this to the value you use to reach the
+# Kong gateway (typically http://localhost:54321 for local stacks).
+API_EXTERNAL_URL=http://localhost:54321
+
 # Supabase Keys
 ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
@@ -169,8 +175,14 @@ SITE_URL=http://localhost:3000
 
 Update your application's environment variables:
 
+> **Tip:** the `start-supabase.ps1` helper will automatically copy the
+> `SUPABASE_PUBLIC_URL` and `ANON_KEY` values from `supabase/.env` into
+> `apps/web/.env.local` as `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
+> This ensures your front‑end picks up the correct values when running locally.
+
 ```bash
-# For apps/web
+# For apps/web (if you are setting them manually or working outside of
+# Windows/PowerShell)
 VITE_SUPABASE_URL=http://localhost:8000
 VITE_SUPABASE_ANON_KEY=your-anon-key-from-env
 

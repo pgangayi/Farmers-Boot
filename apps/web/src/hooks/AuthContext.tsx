@@ -9,6 +9,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
+import { requiredEnv } from '../utils/env';
 import type { User } from '../api/types';
 import type { Session, AuthError } from '@supabase/supabase-js';
 import { authStorage } from '../lib/authStorage';
@@ -88,8 +89,8 @@ function transformUser(supabaseUser: any): User {
 }
 
 function getRedirectUrl(): string {
-  // Use environment variable if available, otherwise use current origin
-  return import.meta.env.VITE_APP_URL || window.location.origin;
+  // `VITE_APP_URL` must be defined in .env to avoid surprises during OAuth flows.
+  return requiredEnv('VITE_APP_URL');
 }
 
 // ============================================================================

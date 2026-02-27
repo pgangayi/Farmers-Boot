@@ -7,7 +7,9 @@
 import { getCurrentSession } from './supabase';
 
 // Get API URL from environment
-const API_URL = import.meta.env.VITE_API_URL || '';
+import { requiredEnv } from '../utils/env';
+
+const API_URL = requiredEnv('VITE_API_URL');
 
 // Reusable error message constant
 const REQUEST_FAILED_MESSAGE = 'Request failed';

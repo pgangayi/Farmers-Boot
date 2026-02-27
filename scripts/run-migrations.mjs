@@ -23,6 +23,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
+import { requireEnv, optionalEnv } from './env.mjs';
 
 const { Pool } = pg;
 const __filename = fileURLToPath(import.meta.url);
@@ -34,17 +35,17 @@ const MIGRATIONS_TABLE = 'schema_migrations';
 
 // Get database connection
 function getPool() {
+  // prefer explicit DATABASE_URL; if not provided fall back to SUPABASE_URL
   let connectionString;
 
   if (process.env.DATABASE_URL) {
     connectionString = process.env.DATABASE_URL;
   } else if (process.env.SUPABASE_URL) {
-    // Convert Supabase URL to direct database URL
-    const supabaseUrl = new URL(process.env.SUPABASE_URL);
-    connectionString = `postgresql://postgres:${process.env.SUPABASE_DB_PASSWORD || 'postgres'}@db.${supabaseUrl.hostname.replace('https://', '')}.supabase.co:5432/postgres`;
+    const supabaseUrl = new URL(requireEnv('SUPABASE_URL'));
+    const password = optionalEnv('SUPABASE_DB_PASSWORD', 'postgres');
+    connectionString = `postgresql://postgres:${password}@db.${supabaseUrl.hostname.replace('https://', '')}.supabase.co:5432/postgres`;
   } else {
-    // Default local development
-    connectionString = 'postgresql://postgres:postgres@localhost:54322/postgres';
+    throw new Error('Either DATABASE_URL or SUPABASE_URL must be provided');
   }
 
   return new Pool({ connectionString });

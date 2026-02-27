@@ -3,8 +3,14 @@ import { defineConfig, devices } from '@playwright/test';
 /**
  * @see https://playwright.dev/docs/test-configuration.
  */
-const FRONTEND_PORT = Number(process.env.FRONTEND_PORT || process.env.PORT || 3000);
-const BASE_URL = process.env.PW_BASE_URL || `http://localhost:${FRONTEND_PORT}`;
+function requireEnv(key: string): string {
+  const v = process.env[key];
+  if (!v) throw new Error(`environment variable ${key} is required for Playwright`);
+  return v;
+}
+
+const FRONTEND_PORT = Number(requireEnv('FRONTEND_PORT'));
+const BASE_URL = requireEnv('PW_BASE_URL');
 
 export default defineConfig({
   testDir: './e2e',

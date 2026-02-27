@@ -1,5 +1,6 @@
 import React, { Suspense, lazy, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
+import { validateEnv } from './utils/envValidation';
 import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
@@ -35,6 +36,10 @@ export const ROUTES = {
   QUEUE: '/queue',
   ANALYTICS: '/analytics',
 } as const;
+
+// Early validation of environment variables.  This throws if any required
+// variable is missing, preventing the app from booting with a bad config.
+validateEnv();
 
 // Sentry configuration helper
 const isSentryEnabled = (): boolean => {

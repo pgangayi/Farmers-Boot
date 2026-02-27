@@ -1,6 +1,8 @@
 // AI Service for Frontend
 // Handles communication with AI endpoints
 
+import { requiredEnv } from '../utils/env';
+
 export interface AIInsightRequest {
   prompt: string;
   context?: Record<string, unknown>;
@@ -66,7 +68,9 @@ class AIServiceImpl {
   private readonly baseUrl: string;
 
   constructor() {
-    this.baseUrl = `${import.meta.env.VITE_API_BASE_URL || ''}/functions/v1/ai`;
+    // base URL is required; `requiredEnv` will throw if missing
+    const base = requiredEnv('VITE_API_BASE_URL');
+    this.baseUrl = `${base}/functions/v1/ai`;
   }
 
   private getAuthToken(): string {

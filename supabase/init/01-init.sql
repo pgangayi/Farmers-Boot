@@ -5,6 +5,20 @@
 -- extensions, and tables for the Farmers Boot application.
 -- ============================================================================
 
+-- Ensure the internal role expected by Supabase exists so init scripts
+-- do not fail when run in a fresh cluster.
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'supabase_admin') THEN
+        CREATE ROLE supabase_admin;
+    END IF;
+END;
+$$;
+
+-- allow execution of pg_read_file from init scripts; image uses this to
+-- inspect extension custom scripts and sometimes the default role lacks exec
+GRANT EXECUTE ON FUNCTION pg_read_file(text) TO postgres;
+
 -- Enable required extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";

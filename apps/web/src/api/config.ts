@@ -9,44 +9,42 @@ const ENDPOINT_TASKS = '/tasks';
 const ENDPOINT_INVENTORY = '/inventory';
 const ENDPOINT_FINANCE = '/finance';
 
-const sanitizeBaseUrl = (value?: string | null): string => {
-  const trimmed = value?.trim();
-  if (!trimmed) {
-    return DEFAULT_RELATIVE_BASE;
-  }
+// Helpers validate required values rather than silently defaulting.
+import { requiredEnv } from '../utils/env';
+
+const sanitizeBaseUrl = (value: string): string => {
+  // value is guaranteed to be non-empty by caller
+  const trimmed = value.trim();
 
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-    try {
-      const parsed = new URL(trimmed);
-      const normalizedPath =
-        parsed.pathname.endsWith('/') && parsed.pathname !== '/'
-          ? parsed.pathname.slice(0, -1)
-          : parsed.pathname;
-      return `${parsed.origin}${normalizedPath}`;
-    } catch (error) {
-      console.warn('Invalid VITE_API_BASE_URL provided, falling back to relative /rest/v1', error);
-      return DEFAULT_RELATIVE_BASE;
-    }
+    const parsed = new URL(trimmed);
+    const normalizedPath =
+      parsed.pathname.endsWith('/') && parsed.pathname !== '/'
+        ? parsed.pathname.slice(0, -1)
+        : parsed.pathname;
+    return `${parsed.origin}${normalizedPath}`;
   }
 
   if (trimmed.startsWith('/')) {
-    return trimmed.endsWith('/') && trimmed !== '/'
-      ? trimmed.slice(0, -1)
-      : trimmed || DEFAULT_RELATIVE_BASE;
+    return trimmed.endsWith('/') && trimmed !== '/' ? trimmed.slice(0, -1) : trimmed;
   }
 
-  console.warn(
-    'VITE_API_BASE_URL must be an absolute URL or start with /. Falling back to /rest/v1.'
-  );
-  return DEFAULT_RELATIVE_BASE;
+  // unreachable due to earlier validation, but keep for type safety
+  throw new Error('VITE_API_BASE_URL must be an absolute URL or start with /');
 };
 
-const resolvedBaseUrl = sanitizeBaseUrl(import.meta.env.VITE_API_BASE_URL);
+// require environment variables up front so the app fails fast if something is
+// mis‑configured. The build will break in CI if any of these are missing.
+const rawBase = requiredEnv('VITE_API_BASE_URL');
+const rawTimeout = requiredEnv('VITE_API_TIMEOUT_MS');
+const rawRetries = requiredEnv('VITE_API_RETRY_ATTEMPTS');
+
+const resolvedBaseUrl = sanitizeBaseUrl(rawBase);
 
 export const API_CONFIG = {
   baseUrl: resolvedBaseUrl,
-  timeout: Number(import.meta.env.VITE_API_TIMEOUT_MS) || 30000,
-  retryAttempts: Number(import.meta.env.VITE_API_RETRY_ATTEMPTS) || 3,
+  timeout: Number(rawTimeout),
+  retryAttempts: Number(rawRetries),
 };
 
 export const STORAGE_KEYS = {

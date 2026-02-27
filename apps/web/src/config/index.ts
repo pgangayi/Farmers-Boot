@@ -58,8 +58,10 @@ export interface AppConfig {
   };
 }
 
+import { requiredEnv } from '../utils/env';
+
 const createAppConfig = (): AppConfig => {
-  const environment = import.meta.env.MODE || 'development';
+  const environment = requiredEnv('MODE');
   const isDevelopment = environment === 'development';
   const isProduction = environment === 'production';
   const isTesting = environment === 'testing';
@@ -184,7 +186,7 @@ class ConfigManager {
   private subscribers: Set<(config: AppConfig) => void> = new Set();
 
   constructor() {
-    const environment = import.meta.env.MODE || 'development';
+    const environment = requiredEnv('MODE');
     const baseConfig = createAppConfig();
     const override = environmentOverrides[environment] || {};
 

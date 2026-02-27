@@ -4,6 +4,8 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+const { requireEnv } = require('../scripts/env.cjs');
+
 class PerformanceTestRunner {
   constructor() {
     this.results = {
@@ -43,7 +45,7 @@ class PerformanceTestRunner {
     console.log('🔍 Checking backend health...');
 
     try {
-      const healthUrl = process.env.TEST_BASE_URL || 'http://localhost:5757';
+      const healthUrl = requireEnv('TEST_BASE_URL');
       const response = await fetch(`${healthUrl}/api/health`);
 
       if (!response.ok) {
@@ -67,7 +69,7 @@ class PerformanceTestRunner {
     };
 
     try {
-      const baseUrl = process.env.TEST_BASE_URL || 'http://localhost:5757';
+      const baseUrl = requireEnv('TEST_BASE_URL');
 
       // Try to register user (ignore if already exists)
       await fetch(`${baseUrl}/api/auth/signup`, {
