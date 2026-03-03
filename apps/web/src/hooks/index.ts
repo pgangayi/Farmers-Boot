@@ -99,3 +99,15 @@ export {
   useOfflineMutation,
   useConflictResolution,
 } from './useOfflineSync';
+
+// ============================================================================
+// ANIMATION & SCROLL
+// ============================================================================
+
+export {
+  useScrollAnimation,
+  useStaggerAnimation,
+  useParallax,
+  useScrollProgress,
+  useInfiniteScroll,
+} from './useScrollAnimation';

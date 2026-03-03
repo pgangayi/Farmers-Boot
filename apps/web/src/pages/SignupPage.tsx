@@ -60,7 +60,7 @@ export function SignupPage() {
     setLoading(true);
     setError('');
 
-    const { error: signupError } = await signUp(email, password, name);
+    const { error: signupError } = await signUp(email, password, { name });
 
     if (signupError) {
       setError(signupError as any);

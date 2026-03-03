@@ -453,8 +453,11 @@ export function useSmartImportExport() {
             rawData = JSON.parse(content);
             break;
           case FORMAT_XLSX:
-            // Would need xlsx library
-            throw new Error('XLSX parsing not implemented yet');
+            // XLSX parsing requires 'xlsx' library (sheetjs)
+            // Install with: npm install xlsx
+            throw new Error(
+              'XLSX import requires the "xlsx" library. Please install it with: npm install xlsx'
+            );
           default:
             throw new Error(`Unsupported format: ${options.format}`);
         }
@@ -682,11 +685,17 @@ export function useSmartImportExport() {
             mimeType = 'application/json';
             break;
           case FORMAT_XLSX:
-            // Would need xlsx library
-            throw new Error('XLSX export not implemented yet');
+            // XLSX export requires 'xlsx' library (sheetjs)
+            // Install with: npm install xlsx
+            throw new Error(
+              'XLSX export requires the "xlsx" library. Please install it with: npm install xlsx'
+            );
           case 'pdf':
-            // Would need PDF generation library
-            throw new Error('PDF export not implemented yet');
+            // PDF export requires 'jspdf' or 'pdfmake' library
+            // Install with: npm install jspdf or npm install pdfmake
+            throw new Error(
+              'PDF export requires a PDF library. Please install "jspdf" with: npm install jspdf'
+            );
           default:
             throw new Error(`Unsupported export format: ${options.format}`);
         }

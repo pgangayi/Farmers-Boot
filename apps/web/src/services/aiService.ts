@@ -48,7 +48,7 @@ export interface AIResponse {
   usage?: Record<string, unknown>;
 }
 
-export interface AIService {
+export interface AIServiceInterface {
   generateInsights(request: AIInsightRequest): Promise<AIResponse>;
   analyzeCropData(request: CropAnalysisRequest): Promise<AIResponse>;
   getLivestockAdvice(request: LivestockAdviceRequest): Promise<AIResponse>;
@@ -64,7 +64,7 @@ export interface AIService {
 // Reusable error message constant
 const UNKNOWN_ERROR_MESSAGE = 'Unknown error occurred';
 
-class AIServiceImpl {
+class AIServiceImpl implements AIServiceInterface {
   private readonly baseUrl: string;
 
   constructor() {

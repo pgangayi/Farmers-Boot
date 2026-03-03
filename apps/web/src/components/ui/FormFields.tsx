@@ -104,13 +104,14 @@ const FormSelect = forwardRef<HTMLButtonElement, FormSelectProps>(
       placeholder,
       value,
       onValueChange,
-      ...props
+      disabled,
+      name,
     },
     ref
   ) => {
     return (
       <FormField label={label} error={error} required={required} description={description}>
-        <Select value={value as string} onValueChange={onValueChange}>
+        <Select value={value} onValueChange={onValueChange}>
           <SelectTrigger
             ref={ref}
             className={cn(error && 'border-red-500 focus-visible:ring-red-500', className)}

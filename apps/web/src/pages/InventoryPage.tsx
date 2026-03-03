@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Package, Bell, Truck, BarChart3, Plus, Warehouse } from 'lucide-react';
+import { Package, Bell, Truck, BarChart3, Plus, Warehouse, Home } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { Breadcrumbs } from '../components/Breadcrumbs';
 import { useAuth } from '../hooks/AuthContext';
 import { useToast } from '../components/ui/use-toast';
+import { Breadcrumbs, useScrollAnimation, useSwipe } from '@farmers-boot/shared/components';
 import {
   useInventory,
   useInventoryLowStock,
@@ -24,6 +25,7 @@ import { InventoryItemModal } from '../components/inventory/InventoryItemModal';
 import { Supplier, InventoryAlert, InventoryFormData } from '../components/inventory/types';
 
 export function InventoryPage() {
+  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -32,6 +34,41 @@ export function InventoryPage() {
   >('overview');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+
+  // Shared hooks for animations and mobile interactions
+  const { ref: scrollRef, isInView } = useScrollAnimation({
+    threshold: 0.1,
+    triggerOnce: true,
+  });
+  const { ref: swipeRef, swipeDirection } = useSwipe({
+    threshold: 50,
+    timeout: 300,
+  });
+
+  // Tab configuration
+  const tabs = [
+    { key: 'overview', label: 'Overview', icon: Package },
+    { key: 'items', label: 'Items', icon: Warehouse },
+    { key: 'alerts', label: 'Alerts', icon: Bell },
+    { key: 'suppliers', label: 'Suppliers', icon: Truck },
+    { key: 'analytics', label: 'Analytics', icon: BarChart3 },
+  ];
+
+  // Handle swipe navigation between tabs on mobile
+  useEffect(() => {
+    if (!swipeDirection || swipeDirection === 'up' || swipeDirection === 'down') return;
+
+    const tabIds = tabs.map(t => t.key);
+    const currentIndex = tabIds.indexOf(viewMode);
+
+    if (swipeDirection === 'left' && currentIndex < tabIds.length - 1) {
+      const nextTab = tabIds[currentIndex + 1];
+      if (nextTab) setViewMode(nextTab as typeof viewMode);
+    } else if (swipeDirection === 'right' && currentIndex > 0) {
+      const prevTab = tabIds[currentIndex - 1];
+      if (prevTab) setViewMode(prevTab as typeof viewMode);
+    }
+  }, [swipeDirection, viewMode, tabs]);
 
   // Use shared inventory hooks
   const { currentFarm } = useFarmWithSelection();
@@ -140,7 +177,14 @@ export function InventoryPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumbs */}
-        <Breadcrumbs className="mb-6" />
+        <Breadcrumbs
+          items={[
+            { label: 'Home', href: '/', icon: <Home className="h-4 w-4" /> },
+            { label: 'Inventory' },
+          ]}
+          onItemClick={item => item.href && navigate(item.href)}
+          className="mb-6"
+        />
 
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -171,19 +215,14 @@ export function InventoryPage() {
 
         {/* Navigation Tabs */}
         <div className="bg-white border-b mb-8">
-          <nav className="-mb-px flex space-x-8">
-            {[
-              { key: 'overview', label: 'Overview', icon: Package },
-              { key: 'items', label: 'Items', icon: Warehouse },
-              { key: 'alerts', label: 'Alerts', icon: Bell },
-              { key: 'suppliers', label: 'Suppliers', icon: Truck },
-            ].map(({ key, label, icon: Icon }) => (
+          <nav className="-mb-px flex space-x-8 overflow-x-auto">
+            {tabs.map(({ key, label, icon: Icon }) => (
               <button
                 key={key}
                 onClick={() =>
                   setViewMode(key as 'items' | 'analytics' | 'overview' | 'alerts' | 'suppliers')
                 }
-                className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
+                className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 whitespace-nowrap ${
                   viewMode === key
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -199,50 +238,61 @@ export function InventoryPage() {
           </nav>
         </div>
 
-        {/* Overview Tab */}
-        {viewMode === 'overview' && <InventoryOverview farmId={currentFarm?.id} />}
+        {/* Main Content with scroll animation and swipe */}
+        <div
+          ref={el => {
+            (scrollRef as React.MutableRefObject<HTMLElement | null>).current = el;
+            (swipeRef as React.MutableRefObject<HTMLElement | null>).current = el;
+          }}
+          className={`transition-all duration-500 ${
+            isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}
+        >
+          {/* Overview Tab */}
+          {viewMode === 'overview' && <InventoryOverview farmId={currentFarm?.id} />}
 
-        {/* Items Tab */}
-        {viewMode === 'items' && (
-          <InventoryList
-            inventoryItems={inventoryItems as any}
-            onEdit={(item: any) => setEditingItem(item)}
-            onView={(item: any) => console.log('View item', item)}
-            onCreate={() => setShowCreateForm(true)}
-          />
-        )}
+          {/* Items Tab */}
+          {viewMode === 'items' && (
+            <InventoryList
+              inventoryItems={inventoryItems as any}
+              onEdit={(item: any) => setEditingItem(item)}
+              onView={(item: any) => console.log('View item', item)}
+              onCreate={() => setShowCreateForm(true)}
+            />
+          )}
 
-        {/* Alerts Tab */}
-        {viewMode === 'alerts' && (
-          <InventoryAlerts alerts={alerts || []} onResolveAlert={handleResolveAlert} />
-        )}
+          {/* Alerts Tab */}
+          {viewMode === 'alerts' && (
+            <InventoryAlerts alerts={alerts || []} onResolveAlert={handleResolveAlert} />
+          )}
 
-        {/* Suppliers Tab */}
-        {viewMode === 'suppliers' && (
-          <SupplierList
-            suppliers={suppliers || []}
-            onAddSupplier={() => console.log('Add supplier')}
-            onEditSupplier={(supplier: any) => console.log('Edit supplier', supplier)}
-          />
-        )}
+          {/* Suppliers Tab */}
+          {viewMode === 'suppliers' && (
+            <SupplierList
+              suppliers={suppliers || []}
+              onAddSupplier={() => console.log('Add supplier')}
+              onEditSupplier={(supplier: any) => console.log('Edit supplier', supplier)}
+            />
+          )}
 
-        {/* Analytics Tab */}
-        {viewMode === 'analytics' && <InventoryAnalytics farmId={currentFarm?.id} />}
+          {/* Analytics Tab */}
+          {viewMode === 'analytics' && <InventoryAnalytics farmId={currentFarm?.id} />}
 
-        {/* Create/Edit Item Modal */}
-        {(showCreateForm || editingItem) && (
-          <InventoryItemModal
-            item={editingItem as any}
-            farms={currentFarm ? [currentFarm as unknown as Farm] : []}
-            suppliers={suppliers || []}
-            onSave={(editingItem ? handleUpdateItem : handleCreateItem) as any}
-            onClose={() => {
-              setShowCreateForm(false);
-              setEditingItem(null);
-            }}
-            isLoading={createMutation.isPending}
-          />
-        )}
+          {/* Create/Edit Item Modal */}
+          {(showCreateForm || editingItem) && (
+            <InventoryItemModal
+              item={editingItem as any}
+              farms={currentFarm ? [currentFarm as unknown as Farm] : []}
+              suppliers={suppliers || []}
+              onSave={(editingItem ? handleUpdateItem : handleCreateItem) as any}
+              onClose={() => {
+                setShowCreateForm(false);
+                setEditingItem(null);
+              }}
+              isLoading={createMutation.isPending}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

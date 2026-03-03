@@ -50,7 +50,12 @@ import {
   Loader2,
   Play,
   Pause,
+  CloudRain,
+  CloudSun,
+  CloudLightning,
+  Snowflake,
 } from 'lucide-react';
+import { useCurrentWeather, useWeatherForecast, getWeatherIcon } from '../api/hooks/useWeather';
 import {
   LineChart,
   Line,
@@ -178,17 +183,37 @@ export function IrrigationOptimizer({ farmId, className = '' }: IrrigationOptimi
     };
   }, [zones]);
 
-  // Weather data (simulated - in real app would come from weather API)
-  const weather = useMemo(
-    () => ({
-      temperature: 28,
-      humidity: 65,
-      rainfall: 0,
-      windSpeed: 12,
-      forecast: 'Sunny',
-    }),
-    []
-  );
+  // Fetch real weather data for irrigation recommendations
+  const { data: currentWeather, isLoading: isLoadingWeather } = useCurrentWeather({
+    locationId: currentFarmId,
+    enabled: !!currentFarmId,
+  });
+
+  const { data: forecast } = useWeatherForecast({
+    locationId: currentFarmId,
+    days: 3,
+    enabled: !!currentFarmId,
+  });
+
+  // Weather icon mapping
+  const getWeatherIconComponent = (condition?: string) => {
+    switch (condition) {
+      case 'sunny':
+        return <Sun className="w-10 h-10 text-amber-500" />;
+      case 'partly_cloudy':
+        return <CloudSun className="w-10 h-10 text-blue-400" />;
+      case 'cloudy':
+        return <Cloud className="w-10 h-10 text-gray-500" />;
+      case 'rainy':
+        return <CloudRain className="w-10 h-10 text-blue-600" />;
+      case 'snowy':
+        return <Snowflake className="w-10 h-10 text-cyan-400" />;
+      case 'stormy':
+        return <CloudLightning className="w-10 h-10 text-purple-600" />;
+      default:
+        return <Sun className="w-10 h-10 text-amber-500" />;
+    }
+  };
 
   // Water usage trend data
   const waterTrendData = useMemo(() => {
@@ -279,35 +304,64 @@ export function IrrigationOptimizer({ farmId, className = '' }: IrrigationOptimi
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Sun className="w-10 h-10 text-amber-500" />
+              {getWeatherIconComponent(currentWeather?.condition)}
               <div>
                 <p className="text-sm text-gray-600">Current Weather</p>
-                <p className="text-xl font-bold">{weather.forecast}</p>
+                <p className="text-xl font-bold capitalize">
+                  {currentWeather?.condition?.replace('_', ' ') || 'Loading...'}
+                </p>
               </div>
             </div>
             <div className="grid grid-cols-4 gap-6 text-center">
               <div>
                 <Thermometer className="w-5 h-5 mx-auto text-red-500 mb-1" />
                 <p className="text-sm text-gray-600">Temp</p>
-                <p className="font-bold">{weather.temperature}°C</p>
+                <p className="font-bold">{currentWeather?.temperature_c?.toFixed(1) ?? '--'}°C</p>
               </div>
               <div>
                 <Droplets className="w-5 h-5 mx-auto text-blue-500 mb-1" />
                 <p className="text-sm text-gray-600">Humidity</p>
-                <p className="font-bold">{weather.humidity}%</p>
+                <p className="font-bold">{currentWeather?.humidity_percent ?? '--'}%</p>
               </div>
               <div>
                 <Cloud className="w-5 h-5 mx-auto text-gray-500 mb-1" />
-                <p className="text-sm text-gray-600">Rain</p>
-                <p className="font-bold">{weather.rainfall}mm</p>
+                <p className="text-sm text-gray-600">Rain (24h)</p>
+                <p className="font-bold">
+                  {currentWeather?.precipitation_mm?.toFixed(1) ?? '--'}mm
+                </p>
               </div>
               <div>
                 <Wind className="w-5 h-5 mx-auto text-cyan-500 mb-1" />
                 <p className="text-sm text-gray-600">Wind</p>
-                <p className="font-bold">{weather.windSpeed}km/h</p>
+                <p className="font-bold">
+                  {currentWeather?.wind_speed_kmh?.toFixed(1) ?? '--'}km/h
+                </p>
               </div>
             </div>
           </div>
+
+          {/* Irrigation Recommendation based on weather */}
+          {currentWeather && (
+            <div className="mt-4 pt-4 border-t border-blue-200">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-800">
+                  Irrigation Recommendation:
+                </span>
+              </div>
+              <p className="text-sm text-blue-700 mt-1">
+                {(currentWeather.precipitation_mm ?? 0) > 5
+                  ? `Recent rainfall of ${currentWeather.precipitation_mm}mm detected. Consider reducing irrigation by ${Math.round((currentWeather.precipitation_mm ?? 0) * 10)}%.`
+                  : (currentWeather.temperature_c ?? 0) > 30
+                    ? `High temperature alert (${currentWeather.temperature_c}°C). Increase irrigation frequency by 20-30%.`
+                    : (currentWeather.humidity_percent ?? 100) < 40
+                      ? `Low humidity (${currentWeather.humidity_percent}%). Monitor soil moisture closely.`
+                      : (forecast?.[0]?.precipitation_probability ?? 0) > 50
+                        ? `Rain expected (${forecast?.[0]?.precipitation_probability}% chance). Consider delaying irrigation.`
+                        : 'Weather conditions are favorable for normal irrigation scheduling.'}
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

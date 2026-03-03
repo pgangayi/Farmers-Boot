@@ -193,3 +193,33 @@ export {
 } from './hooks/useFinance';
 
 export { useIrrigation } from './hooks/useIrrigation';
+
+// ============================================================================
+// HOOKS - WEATHER (Open-Meteo Integration)
+// ============================================================================
+
+export {
+  useWeather,
+  useCurrentWeather,
+  useWeatherForecast,
+  useWeatherByLocation,
+  useWeatherRecommendations,
+  useWeatherAlerts,
+  useGeocode,
+  usePrefetchWeather,
+  getWeatherIcon,
+  getWeatherColor,
+  getWeatherBgColor,
+  getWindDirection,
+  getUVRiskLevel,
+  WEATHER_QUERY_KEYS,
+  type WeatherForecast,
+  type CurrentWeather,
+  type WeatherAlert,
+  type AgriculturalInsight,
+  type GeocodingResult,
+  type WeatherRecommendations,
+  type WeatherResponse,
+  type ForecastResponse,
+  type AlertsResponse,
+} from './hooks/useWeather';

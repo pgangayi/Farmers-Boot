@@ -52,6 +52,7 @@ const STATUS_CONFIG: Record<TaskStatus, { label: string; color: string; bgColor:
 
 const PRIORITY_CONFIG: Record<TaskPriority, { label: string; color: string; bgColor: string }> = {
   low: { label: 'Low', color: 'text-gray-600', bgColor: 'bg-gray-100' },
+  medium: { label: 'Medium', color: 'text-blue-600', bgColor: 'bg-blue-100' },
   normal: { label: 'Normal', color: 'text-blue-600', bgColor: 'bg-blue-100' },
   high: { label: 'High', color: 'text-amber-600', bgColor: 'bg-amber-100' },
   urgent: { label: 'Urgent', color: 'text-red-600', bgColor: 'bg-red-100' },

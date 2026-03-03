@@ -743,7 +743,14 @@ export interface SignupData {
 // ============================================================================
 
 export type CreateRequest<T> = Omit<T, 'id' | 'created_at' | 'updated_at'>;
-export type UpdateRequest<T> = Partial<T>;
+export type UpdateRequest<T> = Partial<Omit<T, 'id' | 'created_at' | 'updated_at'>>;
+
+// Extended request types for entities with required relation fields
+export type CreateHealthRecordRequest = CreateRequest<AnimalHealth> & { animal_id: string };
+export type CreateProductionRecordRequest = CreateRequest<ProductionRecord> & {
+  livestock_id: string;
+};
+export type CreateBreedingRecordRequest = CreateRequest<BreedingRecord> & { livestock_id: string };
 
 // ============================================================================
 // QUERY & FILTER TYPES

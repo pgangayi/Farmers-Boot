@@ -2,7 +2,7 @@
  * WEATHER ANALYTICS COMPONENT
  * ===========================
  * Comprehensive weather analytics dashboard with forecasts,
- * historical data, and agricultural insights
+ * historical data, and agricultural insights using Open-Meteo API
  */
 
 import React, { useState, useMemo } from 'react';
@@ -42,44 +42,29 @@ import {
   Umbrella,
   SunMedium,
   CloudSun,
+  Loader2,
+  CloudLightning,
+  Snowflake,
 } from 'lucide-react';
-import type { WeatherData } from '../api/types';
+import {
+  useWeather,
+  useWeatherForecast,
+  useWeatherAlerts,
+  useWeatherRecommendations,
+  getWindDirection,
+  getUVRiskLevel,
+  type WeatherForecast,
+  type WeatherAlert,
+  type AgriculturalInsight,
+} from '../api/hooks/useWeather';
+import { useFarms } from '../api/hooks/useFarms';
 
 interface WeatherAnalyticsProps {
   farmId?: string;
+  locationId?: string;
+  lat?: number;
+  lon?: number;
   className?: string;
-}
-
-interface DailyForecast {
-  date: string;
-  day: string;
-  temp_max: number;
-  temp_min: number;
-  condition: 'sunny' | 'partly_cloudy' | 'cloudy' | 'rainy' | 'stormy';
-  precipitation: number;
-  humidity: number;
-  wind_speed: number;
-  wind_direction: string;
-  uv_index: number;
-}
-
-interface WeatherAlert {
-  id: string;
-  type: 'warning' | 'watch' | 'advisory';
-  title: string;
-  description: string;
-  valid_from: string;
-  valid_to: string;
-  impact: string[];
-}
-
-interface AgriculturalInsight {
-  id: string;
-  category: 'planting' | 'irrigation' | 'pest' | 'harvest';
-  title: string;
-  description: string;
-  recommendation: string;
-  priority: 'low' | 'medium' | 'high';
 }
 
 // Weather condition icons and colors
@@ -92,7 +77,12 @@ const WEATHER_CONDITIONS: Record<string, { icon: React.ReactNode; color: string;
   },
   cloudy: { icon: <Cloud className="w-6 h-6" />, color: 'text-gray-500', bg: 'bg-gray-100' },
   rainy: { icon: <CloudRain className="w-6 h-6" />, color: 'text-blue-600', bg: 'bg-blue-100' },
-  stormy: { icon: <Umbrella className="w-6 h-6" />, color: 'text-purple-600', bg: 'bg-purple-100' },
+  snowy: { icon: <Snowflake className="w-6 h-6" />, color: 'text-cyan-400', bg: 'bg-cyan-100' },
+  stormy: {
+    icon: <CloudLightning className="w-6 h-6" />,
+    color: 'text-purple-600',
+    bg: 'bg-purple-100',
+  },
 };
 
 // Default weather condition for safety
@@ -109,155 +99,178 @@ const getWeatherCondition = (
   return WEATHER_CONDITIONS[condition] || DEFAULT_WEATHER_CONDITION;
 };
 
-// Generate sample forecast data (in production, this would come from API)
-const generateForecast = (): DailyForecast[] => {
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const conditions: DailyForecast['condition'][] = [
-    'sunny',
-    'partly_cloudy',
-    'cloudy',
-    'rainy',
-    'stormy',
-  ];
-  const windDirections = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-
-  return Array.from({ length: 7 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() + i);
-    const dateStr = date.toISOString().split('T')[0] || '2024-01-01';
-    const dayIndex = date.getDay();
-    const conditionIndex = Math.floor(Math.random() * conditions.length);
-    const windIndex = Math.floor(Math.random() * windDirections.length);
-
-    return {
-      date: dateStr,
-      day: days[dayIndex] || 'Mon',
-      temp_max: 25 + Math.floor(Math.random() * 10),
-      temp_min: 15 + Math.floor(Math.random() * 5),
-      condition: conditions[conditionIndex] || 'sunny',
-      precipitation: Math.floor(Math.random() * 30),
-      humidity: 40 + Math.floor(Math.random() * 40),
-      wind_speed: 5 + Math.floor(Math.random() * 20),
-      wind_direction: windDirections[windIndex] || 'N',
-      uv_index: 3 + Math.floor(Math.random() * 8),
-    };
-  });
-};
-
-// Generate historical data for charts
-const generateHistoricalData = () => {
-  return Array.from({ length: 30 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (29 - i));
-
-    return {
-      date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      temp_max: 25 + Math.floor(Math.random() * 10),
-      temp_min: 12 + Math.floor(Math.random() * 8),
-      rainfall: Math.random() > 0.6 ? Math.floor(Math.random() * 20) : 0,
-      humidity: 40 + Math.floor(Math.random() * 40),
-    };
-  });
-};
-
-// Sample weather alerts
-const WEATHER_ALERTS: WeatherAlert[] = [
-  {
-    id: '1',
-    type: 'warning',
-    title: 'Heavy Rain Warning',
-    description:
-      'Heavy rainfall expected (50-70mm) over the next 48 hours. Risk of localized flooding in low-lying areas.',
-    valid_from: new Date().toISOString(),
-    valid_to: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-    impact: [
-      'Field access may be limited',
-      'Delay planting activities',
-      'Monitor drainage systems',
-    ],
-  },
-  {
-    id: '2',
-    type: 'advisory',
-    title: 'High Temperature Advisory',
-    description:
-      'Temperatures expected to reach 35°C. Ensure adequate water supply for livestock and crops.',
-    valid_from: new Date().toISOString(),
-    valid_to: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-    impact: ['Increase irrigation frequency', 'Provide shade for livestock', 'Monitor crop stress'],
-  },
-];
-
-// Sample agricultural insights
-const AGRICULTURAL_INSIGHTS: AgriculturalInsight[] = [
-  {
-    id: '1',
-    category: 'planting',
-    title: 'Optimal Planting Window',
-    description: 'Current soil temperature and moisture conditions are ideal for maize planting.',
-    recommendation: 'Consider planting maize varieties SC 403 or SC 513 within the next 5-7 days.',
-    priority: 'high',
-  },
-  {
-    id: '2',
-    category: 'irrigation',
-    title: 'Irrigation Scheduling',
-    description:
-      'Based on forecast, reduce irrigation by 30% over the next week due to expected rainfall.',
-    recommendation:
-      'Skip scheduled irrigation for fields with good drainage. Monitor soil moisture levels.',
-    priority: 'medium',
-  },
-  {
-    id: '3',
-    category: 'pest',
-    title: 'Pest Risk Alert',
-    description: 'High humidity conditions favor aphid proliferation in vegetable crops.',
-    recommendation:
-      'Scout vegetable fields regularly. Consider preventive application of neem oil.',
-    priority: 'high',
-  },
-  {
-    id: '4',
-    category: 'harvest',
-    title: 'Harvest Timing',
-    description: 'Dry conditions expected next week - ideal for wheat harvesting.',
-    recommendation: 'Prepare harvesting equipment. Plan to harvest wheat fields by mid-week.',
-    priority: 'medium',
-  },
-];
-
-export function WeatherAnalytics({ farmId, className = '' }: WeatherAnalyticsProps) {
-  const [forecast] = useState<DailyForecast[]>(generateForecast);
-  const [historicalData] = useState(generateHistoricalData);
+export function WeatherAnalytics({
+  farmId,
+  locationId: propLocationId,
+  lat: propLat,
+  lon: propLon,
+  className = '',
+}: WeatherAnalyticsProps) {
   const [selectedDay, setSelectedDay] = useState(0);
   const [timeRange, setTimeRange] = useState<'7d' | '14d' | '30d'>('7d');
 
-  // Calculate weather statistics
-  const stats = useMemo(() => {
-    const avgTemp =
-      forecast.reduce((sum, d) => sum + (d.temp_max + d.temp_min) / 2, 0) / forecast.length;
-    const totalRain = forecast.reduce((sum, d) => sum + d.precipitation, 0);
-    const avgHumidity = forecast.reduce((sum, d) => sum + d.humidity, 0) / forecast.length;
-    const avgWind = forecast.reduce((sum, d) => sum + d.wind_speed, 0) / forecast.length;
+  // Get farms to find location
+  const { data: farms } = useFarms();
+  const currentFarm = farms?.find(f => f.id === farmId) || farms?.[0];
 
-    return { avgTemp, totalRain, avgHumidity, avgWind };
+  // Determine location coordinates
+  const locationId = propLocationId || currentFarm?.location_id;
+  // Note: Farm type doesn't have lat/lon directly - these must be passed as props
+  // or fetched from the location record
+  const lat = propLat;
+  const lon = propLon;
+
+  // Fetch all weather data
+  const { current, forecast, recommendations, alerts, isLoading, isError, error, refetch } =
+    useWeather({
+      locationId,
+      lat,
+      lon,
+      days: timeRange === '7d' ? 7 : timeRange === '14d' ? 14 : 16, // Open-Meteo max is 16
+      enabled: !!(locationId || (lat && lon)),
+    });
+
+  // Calculate weather statistics from forecast
+  const stats = useMemo(() => {
+    if (!forecast || forecast.length === 0) {
+      return { avgTemp: 0, totalRain: 0, avgHumidity: 0, avgWind: 0 };
+    }
+
+    const forecastData = forecast;
+    const avgTemp =
+      forecastData.reduce(
+        (sum: number, d: WeatherForecast) => sum + (d.temperature_max + d.temperature_min) / 2,
+        0
+      ) / forecastData.length;
+    const totalRain = forecastData.reduce(
+      (sum: number, d: WeatherForecast) => sum + (d.precipitation || 0),
+      0
+    );
+    const avgWind =
+      forecastData.reduce((sum: number, d: WeatherForecast) => sum + (d.wind_speed_max || 0), 0) /
+      forecastData.length;
+
+    return { avgTemp, totalRain, avgHumidity: 0, avgWind }; // Humidity not available in daily forecast
   }, [forecast]);
 
+  // Transform forecast data for display
+  const forecastData = useMemo(() => {
+    if (!forecast || forecast.length === 0) return [];
+
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    return forecast.map((day: WeatherForecast, index: number) => {
+      const date = new Date(day.date);
+      const dayIndex = date.getDay();
+
+      return {
+        date: day.date,
+        day: days[dayIndex] ?? 'Mon',
+        temp_max: Math.round(day.temperature_max),
+        temp_min: Math.round(day.temperature_min),
+        condition: day.condition,
+        precipitation: Math.round(day.precipitation || 0),
+        humidity: 50, // Not available in daily forecast, using placeholder
+        wind_speed: Math.round(day.wind_speed_max || 0),
+        wind_direction: getWindDirection(day.wind_direction_dominant || 0),
+        uv_index: day.uv_index_max || 0,
+        precipitation_probability: day.precipitation_probability || 0,
+      };
+    });
+  }, [forecast]);
+
+  // Generate historical data from forecast for charts
+  const historicalData = useMemo(() => {
+    if (!forecastData.length) return [];
+
+    return forecastData.map((day: any) => ({
+      date: day.day,
+      temp_max: day.temp_max,
+      temp_min: day.temp_min,
+      rainfall: day.precipitation,
+      humidity: day.humidity,
+    }));
+  }, [forecastData]);
+
   // Ensure currentDay is always defined with a fallback
-  const currentDay: DailyForecast = forecast[selectedDay] ??
-    forecast[0] ?? {
-      date: new Date().toISOString().split('T')[0] || '2024-01-01',
+  const currentDay: any = forecastData[selectedDay] ??
+    forecastData[0] ?? {
+      date: new Date().toISOString().split('T')[0],
       day: 'Mon',
-      temp_max: 25,
-      temp_min: 15,
-      condition: 'sunny',
-      precipitation: 0,
-      humidity: 50,
-      wind_speed: 10,
-      wind_direction: 'N',
+      temp_max: current?.temperature_c ? Math.round(current.temperature_c) + 2 : 25,
+      temp_min: current?.temperature_c ? Math.round(current.temperature_c) - 2 : 15,
+      condition: current?.condition || 'sunny',
+      precipitation: current?.precipitation_mm || 0,
+      humidity: current?.humidity_percent || 50,
+      wind_speed: current?.wind_speed_kmh || 10,
+      wind_direction: current?.wind_direction_deg
+        ? getWindDirection(current.wind_direction_deg)
+        : 'N',
       uv_index: 5,
     };
+
+  // Get current weather data
+  const currentWeather = current || {
+    temperature_c: currentDay.temp_max,
+    humidity_percent: currentDay.humidity,
+    wind_speed_kmh: currentDay.wind_speed,
+    precipitation_mm: currentDay.precipitation,
+    condition: currentDay.condition,
+  };
+
+  if (isLoading) {
+    return (
+      <div className={`space-y-6 ${className}`}>
+        <div className="flex items-center justify-center h-64">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+            <p className="text-gray-600">Loading weather data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className={`space-y-6 ${className}`}>
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="w-5 h-5 text-red-600" />
+              <h3 className="font-semibold text-red-800">Failed to Load Weather Data</h3>
+            </div>
+            <p className="text-red-700 mb-4">
+              {error instanceof Error ? error.message : 'Unable to fetch weather information'}
+            </p>
+            <Button onClick={() => refetch()} variant="outline">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!locationId && !(lat && lon)) {
+    return (
+      <div className={`space-y-6 ${className}`}>
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <MapPin className="w-5 h-5 text-amber-600" />
+              <h3 className="font-semibold text-amber-800">No Location Set</h3>
+            </div>
+            <p className="text-amber-700">
+              Please set a location for your farm to view weather data. You can set the location in
+              your farm settings.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -270,10 +283,15 @@ export function WeatherAnalytics({ farmId, className = '' }: WeatherAnalyticsPro
           </h2>
           <p className="text-gray-600 flex items-center gap-1">
             <MapPin className="w-4 h-4" />
-            Farm weather station data
+            {currentFarm?.name || 'Farm'} weather - Powered by Open-Meteo
           </p>
         </div>
-        <Button variant="outline" size="sm" className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2"
+          onClick={() => refetch()}
+        >
           <RefreshCw className="w-4 h-4" />
           Refresh
         </Button>
@@ -289,13 +307,13 @@ export function WeatherAnalytics({ farmId, className = '' }: WeatherAnalyticsPro
               </div>
               <div>
                 <div className="text-5xl font-bold">
-                  {Math.round((currentDay.temp_max + currentDay.temp_min) / 2)}°C
+                  {Math.round(currentWeather.temperature_c ?? currentDay.temp_max)}°C
                 </div>
                 <div className="text-blue-100 capitalize">
-                  {currentDay.condition.replace('_', ' ')}
+                  {(currentWeather.condition || currentDay.condition).replace('_', ' ')}
                 </div>
                 <div className="text-sm text-blue-200 mt-1">
-                  {new Date(currentDay.date).toLocaleDateString('en-US', {
+                  {new Date().toLocaleDateString('en-US', {
                     weekday: 'long',
                     month: 'long',
                     day: 'numeric',
@@ -315,19 +333,24 @@ export function WeatherAnalytics({ farmId, className = '' }: WeatherAnalyticsPro
               <div className="text-center">
                 <Droplets className="w-5 h-5 mx-auto mb-1 text-blue-200" />
                 <div className="text-sm text-blue-200">Humidity</div>
-                <div className="font-semibold">{currentDay.humidity}%</div>
+                <div className="font-semibold">
+                  {currentWeather.humidity_percent ?? currentDay.humidity}%
+                </div>
               </div>
               <div className="text-center">
                 <Wind className="w-5 h-5 mx-auto mb-1 text-blue-200" />
                 <div className="text-sm text-blue-200">Wind</div>
                 <div className="font-semibold">
-                  {currentDay.wind_speed} km/h {currentDay.wind_direction}
+                  {currentWeather.wind_speed_kmh ?? currentDay.wind_speed} km/h{' '}
+                  {currentDay.wind_direction}
                 </div>
               </div>
               <div className="text-center">
                 <Umbrella className="w-5 h-5 mx-auto mb-1 text-blue-200" />
                 <div className="text-sm text-blue-200">Rain</div>
-                <div className="font-semibold">{currentDay.precipitation} mm</div>
+                <div className="font-semibold">
+                  {currentWeather.precipitation_mm ?? currentDay.precipitation} mm
+                </div>
               </div>
             </div>
           </div>
@@ -341,7 +364,7 @@ export function WeatherAnalytics({ farmId, className = '' }: WeatherAnalyticsPro
         </CardHeader>
         <CardContent>
           <div className="flex gap-2 overflow-x-auto pb-2">
-            {forecast.map((day, index) => (
+            {forecastData.map((day: any, index: number) => (
               <button
                 key={day.date}
                 onClick={() => setSelectedDay(index)}
@@ -387,7 +410,7 @@ export function WeatherAnalytics({ farmId, className = '' }: WeatherAnalyticsPro
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Expected Rainfall</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalRain} mm</p>
+                <p className="text-2xl font-bold text-gray-900">{Math.round(stats.totalRain)} mm</p>
               </div>
               <div className="p-3 bg-blue-100 rounded-full">
                 <CloudRain className="w-6 h-6 text-blue-600" />
@@ -400,8 +423,10 @@ export function WeatherAnalytics({ farmId, className = '' }: WeatherAnalyticsPro
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Avg Humidity</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.avgHumidity.toFixed(0)}%</p>
+                <p className="text-sm text-gray-600">Rain Probability</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {forecastData[selectedDay]?.precipitation_probability ?? 0}%
+                </p>
               </div>
               <div className="p-3 bg-cyan-100 rounded-full">
                 <Droplets className="w-6 h-6 text-cyan-600" />
@@ -449,7 +474,7 @@ export function WeatherAnalytics({ farmId, className = '' }: WeatherAnalyticsPro
           <CardContent>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={historicalData.slice(-7)}>
+                <AreaChart data={historicalData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
@@ -485,7 +510,7 @@ export function WeatherAnalytics({ farmId, className = '' }: WeatherAnalyticsPro
           <CardContent>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={historicalData.slice(-7)}>
+                <BarChart data={historicalData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
@@ -515,47 +540,54 @@ export function WeatherAnalytics({ farmId, className = '' }: WeatherAnalyticsPro
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {WEATHER_ALERTS.map(alert => (
-                <div
-                  key={alert.id}
-                  className={`p-4 rounded-lg border-l-4 ${
-                    alert.type === 'warning'
-                      ? 'bg-red-50 border-red-500'
-                      : alert.type === 'watch'
-                        ? 'bg-amber-50 border-amber-500'
-                        : 'bg-blue-50 border-blue-500'
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h4 className="font-semibold text-gray-900">{alert.title}</h4>
-                      <p className="text-sm text-gray-600 mt-1">{alert.description}</p>
+              {alerts?.alerts && alerts.alerts.length > 0 ? (
+                alerts.alerts.map((alert: WeatherAlert) => (
+                  <div
+                    key={alert.id}
+                    className={`p-4 rounded-lg border-l-4 ${
+                      alert.type === 'warning'
+                        ? 'bg-red-50 border-red-500'
+                        : alert.type === 'watch'
+                          ? 'bg-amber-50 border-amber-500'
+                          : 'bg-blue-50 border-blue-500'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h4 className="font-semibold text-gray-900">{alert.title}</h4>
+                        <p className="text-sm text-gray-600 mt-1">{alert.description}</p>
+                      </div>
+                      <Badge
+                        className={
+                          alert.type === 'warning'
+                            ? 'bg-red-100 text-red-800'
+                            : alert.type === 'watch'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-blue-100 text-blue-800'
+                        }
+                      >
+                        {alert.type}
+                      </Badge>
                     </div>
-                    <Badge
-                      className={
-                        alert.type === 'warning'
-                          ? 'bg-red-100 text-red-800'
-                          : alert.type === 'watch'
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-blue-100 text-blue-800'
-                      }
-                    >
-                      {alert.type}
-                    </Badge>
+                    <div className="mt-3">
+                      <p className="text-xs text-gray-500 font-medium">Potential Impact:</p>
+                      <ul className="text-sm text-gray-600 mt-1">
+                        {alert.impact.map((item: string, i: number) => (
+                          <li key={i} className="flex items-center gap-2">
+                            <span className="w-1 h-1 bg-gray-400 rounded-full" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
-                  <div className="mt-3">
-                    <p className="text-xs text-gray-500 font-medium">Potential Impact:</p>
-                    <ul className="text-sm text-gray-600 mt-1">
-                      {alert.impact.map((item, i) => (
-                        <li key={i} className="flex items-center gap-2">
-                          <span className="w-1 h-1 bg-gray-400 rounded-full" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Sun className="w-12 h-12 mx-auto mb-2 text-green-500" />
+                  <p>No weather alerts at this time</p>
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
@@ -570,70 +602,109 @@ export function WeatherAnalytics({ farmId, className = '' }: WeatherAnalyticsPro
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {AGRICULTURAL_INSIGHTS.map(insight => (
-                <div key={insight.id} className="p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      {insight.category === 'planting' && (
-                        <Sun className="w-4 h-4 text-green-500" />
-                      )}
-                      {insight.category === 'irrigation' && (
-                        <Droplets className="w-4 h-4 text-blue-500" />
-                      )}
-                      {insight.category === 'pest' && <Eye className="w-4 h-4 text-red-500" />}
-                      {insight.category === 'harvest' && (
-                        <Calendar className="w-4 h-4 text-amber-500" />
-                      )}
-                      <h4 className="font-semibold text-gray-900">{insight.title}</h4>
+              {recommendations?.agriculturalInsights &&
+              recommendations.agriculturalInsights.length > 0 ? (
+                recommendations.agriculturalInsights.map((insight: AgriculturalInsight) => (
+                  <div key={insight.id} className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-2">
+                        {insight.category === 'planting' && (
+                          <Sun className="w-4 h-4 text-green-500" />
+                        )}
+                        {insight.category === 'irrigation' && (
+                          <Droplets className="w-4 h-4 text-blue-500" />
+                        )}
+                        {insight.category === 'pest' && <Eye className="w-4 h-4 text-red-500" />}
+                        {insight.category === 'harvest' && (
+                          <Calendar className="w-4 h-4 text-amber-500" />
+                        )}
+                        {insight.category === 'livestock' && (
+                          <SunMedium className="w-4 h-4 text-orange-500" />
+                        )}
+                        {insight.category === 'maintenance' && (
+                          <Gauge className="w-4 h-4 text-gray-500" />
+                        )}
+                        <h4 className="font-semibold text-gray-900">{insight.title}</h4>
+                      </div>
+                      <Badge
+                        className={
+                          insight.priority === 'high'
+                            ? 'bg-red-100 text-red-800'
+                            : insight.priority === 'medium'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-green-100 text-green-800'
+                        }
+                      >
+                        {insight.priority}
+                      </Badge>
                     </div>
-                    <Badge
-                      className={
-                        insight.priority === 'high'
-                          ? 'bg-red-100 text-red-800'
-                          : insight.priority === 'medium'
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-green-100 text-green-800'
-                      }
-                    >
-                      {insight.priority}
-                    </Badge>
+                    <p className="text-sm text-gray-600 mt-2">{insight.description}</p>
+                    <div className="mt-2 p-2 bg-white rounded border">
+                      <p className="text-sm text-gray-700">
+                        <span className="font-medium">Recommendation:</span>{' '}
+                        {insight.recommendation}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-600 mt-2">{insight.description}</p>
-                  <div className="mt-2 p-2 bg-white rounded border">
-                    <p className="text-sm text-gray-700">
-                      <span className="font-medium">Recommendation:</span> {insight.recommendation}
-                    </p>
-                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <TrendingUp className="w-12 h-12 mx-auto mb-2 text-green-500" />
+                  <p>No specific insights at this time</p>
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Humidity Trend */}
+      {/* UV Index and Additional Info */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Humidity Trend</CardTitle>
+          <CardTitle className="text-lg">Additional Weather Information</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-48">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={historicalData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} domain={[0, 100]} />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="humidity"
-                  stroke="#06b6d4"
-                  strokeWidth={2}
-                  dot={false}
-                  name="Humidity %"
-                />
-              </LineChart>
-            </ResponsiveContainer>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <SunMedium className="w-5 h-5 text-orange-500" />
+                <span className="font-medium">UV Index</span>
+              </div>
+              <p className="text-2xl font-bold">{forecastData[selectedDay]?.uv_index ?? 0}</p>
+              <p
+                className={`text-sm ${getUVRiskLevel(forecastData[selectedDay]?.uv_index ?? 0).color}`}
+              >
+                {getUVRiskLevel(forecastData[selectedDay]?.uv_index ?? 0).level}
+              </p>
+            </div>
+
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Wind className="w-5 h-5 text-cyan-500" />
+                <span className="font-medium">Wind Gusts</span>
+              </div>
+              <p className="text-2xl font-bold">
+                {Math.round(forecast?.[selectedDay]?.wind_gusts_max || 0)} km/h
+              </p>
+              <p className="text-sm text-gray-600">
+                Direction: {getWindDirection(forecast?.[selectedDay]?.wind_direction_dominant || 0)}
+              </p>
+            </div>
+
+            <div className="p-4 bg-purple-50 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Gauge className="w-5 h-5 text-purple-500" />
+                <span className="font-medium">Pressure</span>
+              </div>
+              <p className="text-2xl font-bold">{Math.round(current?.pressure_hpa || 1013)} hPa</p>
+              <p className="text-sm text-gray-600">
+                {current?.pressure_hpa && current.pressure_hpa > 1020
+                  ? 'High pressure - stable weather'
+                  : current?.pressure_hpa && current.pressure_hpa < 1000
+                    ? 'Low pressure - possible precipitation'
+                    : 'Normal pressure'}
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>

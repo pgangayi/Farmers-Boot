@@ -142,15 +142,15 @@ export function InventoryAnalytics({ farmId, className = '' }: InventoryAnalytic
       minimum: (item as any).min_stock_level || 0,
     }));
 
-    // Generate trend data from inventory timestamps
-    // In production, this would come from a dedicated API endpoint for historical data
+    // TODO: Fetch real historical data from API endpoint
+    // For now, show flat trends based on current data
     const trends = Array.from({ length: 7 }, (_, i) => {
       const date = new Date();
       date.setDate(date.getDate() - (6 - i));
       return {
         date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        items: Math.floor(Math.random() * 10) + totalItems - 5,
-        value: Math.floor(Math.random() * 1000) + Math.round(totalValue / 100) - 500,
+        items: totalItems, // Current count (historical data not available)
+        value: Math.round(totalValue), // Current value (historical data not available)
       };
     });
 

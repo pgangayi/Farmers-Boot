@@ -81,7 +81,7 @@ interface QuickAction {
   variant?: 'default' | 'destructive' | 'outline';
 }
 
-interface AdvancedManagementDashboardProps {
+export interface AdvancedManagementDashboardProps {
   farmId?: string;
 }
 

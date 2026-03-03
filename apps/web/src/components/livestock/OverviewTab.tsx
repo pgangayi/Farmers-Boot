@@ -12,6 +12,7 @@ import {
   useLivestock,
   useLivestockStats,
   useAnimalHealthRecords,
+  useLivestockActivities,
 } from '../../api/hooks/useLivestock';
 import { useFarms } from '../../api/hooks/useFarms';
 import {
@@ -60,6 +61,7 @@ export function OverviewTab({ farmId, className = '', onNavigate }: OverviewTabP
   const currentFarmId = farmId || farms?.[0]?.id;
   const { data: livestock, isLoading } = useLivestock(currentFarmId);
   const { data: stats } = useLivestockStats(currentFarmId);
+  const { data: activities } = useLivestockActivities(currentFarmId, 5);
 
   // Calculate overview statistics
   const overviewStats = useMemo(() => {
@@ -123,7 +125,7 @@ export function OverviewTab({ farmId, className = '', onNavigate }: OverviewTabP
       byHealthStatus,
       avgWeight,
       recentBirths,
-      pendingVaccinations: Math.floor(Math.random() * 5), // Would come from health records
+      pendingVaccinations: 0, // Will be calculated from upcoming health records when available
     };
   }, [livestock]);
 
@@ -134,13 +136,8 @@ export function OverviewTab({ farmId, className = '', onNavigate }: OverviewTabP
       .slice(0, 4);
   }, [overviewStats.bySpecies]);
 
-  // Recent activities (mock data - would come from activity log)
-  const recentActivities = [
-    { id: 1, type: 'birth', message: 'New calf born - Tag #C245', time: '2 hours ago' },
-    { id: 2, type: 'health', message: 'Vaccination completed for 15 goats', time: '5 hours ago' },
-    { id: 3, type: 'weight', message: 'Weight recorded for cattle batch A', time: 'Yesterday' },
-    { id: 4, type: 'sale', message: '3 pigs sold to market', time: '2 days ago' },
-  ];
+  // Use real activities from the API, fallback to empty array while loading
+  const recentActivities = activities || [];
 
   if (isLoading) {
     return (
@@ -344,32 +341,44 @@ export function OverviewTab({ farmId, className = '', onNavigate }: OverviewTabP
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentActivities.map(activity => (
-                <div key={activity.id} className="flex items-start gap-3">
-                  <div
-                    className={`p-1.5 rounded-full ${
-                      activity.type === 'birth'
-                        ? 'bg-pink-100'
-                        : activity.type === 'health'
-                          ? 'bg-green-100'
-                          : activity.type === 'weight'
-                            ? 'bg-blue-100'
-                            : 'bg-amber-100'
-                    }`}
-                  >
-                    {activity.type === 'birth' && <Baby className="w-3 h-3 text-pink-600" />}
-                    {activity.type === 'health' && <Syringe className="w-3 h-3 text-green-600" />}
-                    {activity.type === 'weight' && <Weight className="w-3 h-3 text-blue-600" />}
-                    {activity.type === 'sale' && <DollarSign className="w-3 h-3 text-amber-600" />}
+            {recentActivities.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Clock className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                <p className="text-sm">No recent activity</p>
+                <p className="text-xs">
+                  Activities will appear here when you add animals or health records
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {recentActivities.map(activity => (
+                  <div key={activity.id} className="flex items-start gap-3">
+                    <div
+                      className={`p-1.5 rounded-full ${
+                        activity.type === 'birth'
+                          ? 'bg-pink-100'
+                          : activity.type === 'health'
+                            ? 'bg-green-100'
+                            : activity.type === 'weight'
+                              ? 'bg-blue-100'
+                              : 'bg-amber-100'
+                      }`}
+                    >
+                      {activity.type === 'birth' && <Baby className="w-3 h-3 text-pink-600" />}
+                      {activity.type === 'health' && <Syringe className="w-3 h-3 text-green-600" />}
+                      {activity.type === 'weight' && <Weight className="w-3 h-3 text-blue-600" />}
+                      {activity.type === 'sale' && (
+                        <DollarSign className="w-3 h-3 text-amber-600" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-900">{activity.message}</p>
+                      <p className="text-xs text-gray-500">{activity.time}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900">{activity.message}</p>
-                    <p className="text-xs text-gray-500">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

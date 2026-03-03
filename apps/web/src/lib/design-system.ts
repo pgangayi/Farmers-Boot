@@ -379,6 +379,7 @@ export function DesignSystemProvider({
     // Store preferences
     localStorage.setItem('theme-mode', themeMode);
     localStorage.setItem('theme-variant', themeVariant);
+    return;
   }, [themeMode, themeVariant, isDark, colors]);
 
   // Listen for system theme changes

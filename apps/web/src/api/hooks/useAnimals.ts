@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib';
 import { QUERY_KEYS, CACHE_CONFIG } from '../constants';
-import type { Livestock as Animal, CreateRequest, UpdateRequest } from '../types';
+import type { Livestock as Animal, CreateRequest, UpdateRequest, Breed } from '../types';
 
 export function useAnimals(farm_id?: string) {
   return useQuery({
@@ -62,13 +62,25 @@ export function useDeleteAnimal() {
   });
 }
 
-export function useBreeds() {
+export function useBreeds(species?: string) {
   return useQuery({
-    queryKey: ['breeds'],
-    queryFn: async () => [],
+    queryKey: species ? ['breeds', species] : ['breeds'],
+    queryFn: async () => {
+      const endpoint = species ? `lookup_breeds?species=eq.${species}` : 'lookup_breeds';
+      return await apiClient.get<Breed[]>(endpoint);
+    },
+    staleTime: CACHE_CONFIG.staleTime.default,
   });
 }
 
 export function useAddBreed() {
-  return useMutation({ mutationFn: async (data: any) => data });
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { name: string; species: string; description?: string }) => {
+      return await apiClient.post<Breed>('lookup_breeds', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['breeds'] });
+    },
+  });
 }

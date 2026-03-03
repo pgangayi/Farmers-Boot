@@ -18,6 +18,9 @@ import type {
   BreedingRecord,
   CreateRequest,
   UpdateRequest,
+  CreateHealthRecordRequest,
+  CreateProductionRecordRequest,
+  CreateBreedingRecordRequest,
 } from '../types';
 
 // ============================================================================
@@ -229,14 +232,14 @@ export function useCreateHealthRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: CreateRequest<AnimalHealth>): Promise<AnimalHealth> => {
+    mutationFn: async (data: CreateHealthRecordRequest): Promise<AnimalHealth> => {
       return await apiClient.post<AnimalHealth>('livestock_health', data, {
         single: true,
       });
     },
     onSuccess: (_, variables) => {
-      const animalId = (variables as CreateRequest<AnimalHealth> & { animal_id?: string })
-        .animal_id;
+      // Access animal_id from variables - CreateHealthRecordRequest has animal_id
+      const animalId = (variables as { animal_id?: string }).animal_id;
       if (animalId) {
         queryClient.invalidateQueries({
           queryKey: LIVESTOCK_QUERY_KEYS.health(animalId),
@@ -301,13 +304,14 @@ export function useCreateProductionRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: CreateRequest<ProductionRecord>): Promise<ProductionRecord> => {
+    mutationFn: async (data: CreateProductionRecordRequest): Promise<ProductionRecord> => {
       return await apiClient.post<ProductionRecord>('livestock_production', data, {
         single: true,
       });
     },
     onSuccess: (_, variables) => {
-      const livestockId = (variables as CreateRequest<ProductionRecord>).livestock_id;
+      // Access livestock_id from variables
+      const livestockId = (variables as { livestock_id?: string }).livestock_id;
       if (livestockId) {
         queryClient.invalidateQueries({
           queryKey: LIVESTOCK_QUERY_KEYS.production(livestockId),
@@ -347,13 +351,14 @@ export function useCreateBreedingRecord() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: CreateRequest<BreedingRecord>): Promise<BreedingRecord> => {
+    mutationFn: async (data: CreateBreedingRecordRequest): Promise<BreedingRecord> => {
       return await apiClient.post<BreedingRecord>('livestock_breeding', data, {
         single: true,
       });
     },
     onSuccess: (_, variables) => {
-      const livestockId = (variables as CreateRequest<BreedingRecord>).livestock_id;
+      // Access livestock_id from variables
+      const livestockId = (variables as { livestock_id?: string }).livestock_id;
       if (livestockId) {
         queryClient.invalidateQueries({
           queryKey: LIVESTOCK_QUERY_KEYS.breeding(livestockId),
@@ -410,6 +415,104 @@ export function useLivestockStats(farm_id?: string) {
         ),
         average_age: 0, // Would need birth_date calculation
       };
+    },
+    enabled: !!farm_id,
+    staleTime: CACHE_CONFIG.staleTime.animals,
+  });
+}
+
+// ============================================================================
+// RECENT ACTIVITIES
+// ============================================================================
+
+export interface LivestockActivity {
+  id: string;
+  type: 'birth' | 'health' | 'weight' | 'sale' | 'purchase' | 'production';
+  message: string;
+  time: string;
+  timestamp: Date;
+}
+
+/**
+ * Fetch recent livestock activities for a farm
+ * Combines data from livestock records, health records, and production records
+ */
+export function useLivestockActivities(farm_id?: string, limit = 10) {
+  return useQuery({
+    queryKey: ['livestock', 'activities', farm_id, limit],
+    queryFn: async (): Promise<LivestockActivity[]> => {
+      if (!farm_id) return [];
+
+      const activities: LivestockActivity[] = [];
+
+      // Fetch recent livestock additions (births/purchases)
+      const recentLivestock = await apiClient.get<Livestock[]>(
+        `livestock?farm_id=eq.${farm_id}&order=created_at.desc&limit=${limit}`
+      );
+
+      recentLivestock.forEach(animal => {
+        const createdAt = new Date(animal.created_at);
+        const daysSince = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+        let timeText: string;
+        if (daysSince === 0) timeText = 'Today';
+        else if (daysSince === 1) timeText = 'Yesterday';
+        else if (daysSince < 7) timeText = `${daysSince} days ago`;
+        else if (daysSince < 30) timeText = `${Math.floor(daysSince / 7)} weeks ago`;
+        else timeText = `${Math.floor(daysSince / 30)} months ago`;
+
+        // Access tag_id from the raw data (it might not be in the TypeScript type)
+        const tagId = (animal as any).tag_id || (animal as any).tag_number || 'N/A';
+        const animalType = (animal as any).type || (animal as any).species || 'animal';
+        const animalName = (animal as any).name;
+
+        activities.push({
+          id: `add-${animal.id}`,
+          type:
+            animal.birth_date &&
+            new Date(animal.birth_date) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+              ? 'birth'
+              : 'purchase',
+          message: animalName
+            ? `New ${animalType} added - ${animalName} (${tagId})`
+            : `New ${animalType} added - Tag #${tagId}`,
+          time: timeText,
+          timestamp: createdAt,
+        });
+      });
+
+      // Fetch recent health records (vaccinations, checkups)
+      const recentHealth = await apiClient.get<AnimalHealth[]>(
+        `livestock_health?farm_id=eq.${farm_id}&order=created_at.desc&limit=${limit}`
+      );
+
+      recentHealth.forEach(record => {
+        const createdAt = new Date(record.created_at);
+        const daysSince = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+        let timeText: string;
+        if (daysSince === 0) timeText = 'Today';
+        else if (daysSince === 1) timeText = 'Yesterday';
+        else if (daysSince < 7) timeText = `${daysSince} days ago`;
+        else timeText = `${Math.floor(daysSince / 7)} weeks ago`;
+
+        // Access properties from raw data with type assertions
+        const treatment = (record as any).treatment || (record as any).treatments;
+        const livestockId = (record as any).livestock_id || (record as any).animal_id;
+
+        activities.push({
+          id: `health-${record.id}`,
+          type: 'health',
+          message: treatment
+            ? `Health treatment recorded: ${treatment}`
+            : `Health check recorded for ${livestockId || 'animal'}`,
+          time: timeText,
+          timestamp: createdAt,
+        });
+      });
+
+      // Sort by timestamp descending and take the limit
+      return activities
+        .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+        .slice(0, limit);
     },
     enabled: !!farm_id,
     staleTime: CACHE_CONFIG.staleTime.animals,

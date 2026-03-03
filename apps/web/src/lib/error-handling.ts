@@ -153,7 +153,7 @@ export class NetworkError extends BaseError {
 }
 
 export class ApiError extends BaseError {
-  code: string = 'API_ERROR';
+  readonly code: string = 'API_ERROR';
   readonly statusCode: number;
 
   constructor(
@@ -168,7 +168,7 @@ export class ApiError extends BaseError {
 }
 
 export class RateLimitError extends ApiError {
-  override readonly code: string = 'RATE_LIMIT';
+  override readonly code = 'RATE_LIMIT';
   override readonly statusCode = 429;
 
   constructor(

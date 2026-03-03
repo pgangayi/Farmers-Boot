@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/AuthContext';
 import {
   useFarmWithSelection,
@@ -8,7 +9,6 @@ import {
   useAddCropVariety,
 } from '../api';
 import { Button } from '../components/ui/button';
-import { Breadcrumbs } from '../components/Breadcrumbs';
 import { LoadingErrorContent } from '../components/ui/LoadingStates';
 import { UnifiedModal } from '../components/ui/UnifiedModal';
 import {
@@ -21,7 +21,9 @@ import {
   TestTube,
   BookOpen,
   Sprout,
+  Home,
 } from 'lucide-react';
+import { Breadcrumbs, useScrollAnimation, useSwipe } from '@farmers-boot/shared/components';
 
 import { CropRotationPlanner } from '../components/CropRotationPlanner';
 import { IrrigationOptimizer } from '../components/IrrigationOptimizer';
@@ -45,9 +47,47 @@ type TabValues =
   | 'reference';
 
 export function CropsPage() {
+  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { currentFarm } = useFarmWithSelection();
   const [activeTab, setActiveTab] = useState<TabValues>('overview');
+
+  // Shared hooks for animations and mobile interactions
+  const { ref: scrollRef, isInView } = useScrollAnimation({
+    threshold: 0.1,
+    triggerOnce: true,
+  });
+  const { ref: swipeRef, swipeDirection } = useSwipe({
+    threshold: 50,
+    timeout: 300,
+  });
+
+  // Tab configuration
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: Target },
+    { id: 'planning', label: 'Planning', icon: Calculator },
+    { id: 'rotation', label: 'Rotation', icon: Sprout },
+    { id: 'irrigation', label: 'Irrigation', icon: Droplets },
+    { id: 'pests', label: 'Pests & Diseases', icon: Bug },
+    { id: 'soil', label: 'Soil Health', icon: TestTube },
+    { id: 'reference', label: 'Knowledge Base', icon: BookOpen },
+  ];
+
+  // Handle swipe navigation between tabs on mobile
+  useEffect(() => {
+    if (!swipeDirection || swipeDirection === 'up' || swipeDirection === 'down') return;
+
+    const tabIds = tabs.map(t => t.id);
+    const currentIndex = tabIds.indexOf(activeTab);
+
+    if (swipeDirection === 'left' && currentIndex < tabIds.length - 1) {
+      const nextTab = tabIds[currentIndex + 1];
+      if (nextTab) setActiveTab(nextTab as TabValues);
+    } else if (swipeDirection === 'right' && currentIndex > 0) {
+      const prevTab = tabIds[currentIndex - 1];
+      if (prevTab) setActiveTab(prevTab as TabValues);
+    }
+  }, [swipeDirection, activeTab, tabs]);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showVarietyModal, setShowVarietyModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -84,7 +124,14 @@ export function CropsPage() {
       {/* Header */}
       <div className="relative z-10 bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Breadcrumbs className="mb-4" />
+          <Breadcrumbs
+            items={[
+              { label: 'Home', href: '/', icon: <Home className="h-4 w-4" /> },
+              { label: 'Crops' },
+            ]}
+            onItemClick={item => item.href && navigate(item.href)}
+            className="mb-4"
+          />
           <div className="flex justify-between items-center mb-6">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -103,15 +150,7 @@ export function CropsPage() {
 
           {/* Navigation */}
           <div className="flex overflow-x-auto gap-1 pb-1 scrollbar-hide">
-            {[
-              { id: 'overview', label: 'Overview', icon: Target },
-              { id: 'planning', label: 'Planning', icon: Calculator },
-              { id: 'rotation', label: 'Rotation', icon: Sprout },
-              { id: 'irrigation', label: 'Irrigation', icon: Droplets },
-              { id: 'pests', label: 'Pests & Diseases', icon: Bug },
-              { id: 'soil', label: 'Soil Health', icon: TestTube },
-              { id: 'reference', label: 'Knowledge Base', icon: BookOpen },
-            ].map(tab => (
+            {tabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as TabValues)}
@@ -130,8 +169,16 @@ export function CropsPage() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content with scroll animation and swipe */}
+      <main
+        ref={el => {
+          (scrollRef as React.MutableRefObject<HTMLElement | null>).current = el;
+          (swipeRef as React.MutableRefObject<HTMLElement | null>).current = el;
+        }}
+        className={`relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 transition-all duration-500 ${
+          isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`}
+      >
         <LoadingErrorContent isLoading={isLoading} error={error} onRetry={refetch}>
           {activeTab === 'overview' && <CropsOverview farmId={currentFarm.id} />}
 
@@ -158,7 +205,7 @@ export function CropsPage() {
             type: 'select',
             options: strains.map(s => ({
               value: s.name,
-              label: `${(s as any).crop_type || (s as any).cropType || 'Unknown'} - ${s.name}`,
+              label: `${'crop_type' in s ? (s as { crop_type: string }).crop_type : 'Unknown'} - ${s.name}`,
             })),
             creatable: true,
             onAdd: () => setShowVarietyModal(true),

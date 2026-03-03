@@ -3,45 +3,46 @@
 
 import { z } from 'zod';
 
-// Base schemas with common fields
-const base_fields = {
-  id: z.string().optional(),
-  created_at: z.string().datetime().optional(),
-  updated_at: z.string().datetime().optional(),
-};
-
 // User schemas
 export const user_schema = z.object({
-  ...base_fields,
   id: z.string(),
   email: z.string().email(),
   name: z.string().min(1).max(100),
   password_hash: z.string().optional(),
   role: z.enum(['user', 'admin', 'manager']).default('user'),
   avatar: z.string().url().optional(),
+  created_at: z.string().datetime().optional(),
+  updated_at: z.string().datetime().optional(),
 });
 
-export const create_user_schema = user_schema
-  .pick({
-    email: true,
-    name: true,
-  })
-  .extend({
-    password: z.string().min(8).max(100),
-  });
+export const create_user_schema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1).max(100),
+  password: z.string().min(8).max(100),
+});
 
-export const update_user_schema = user_schema
-  .pick({
-    name: true,
-    avatar: true,
-    role: true,
-  })
-  .partial();
+export const update_user_schema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  avatar: z.string().url().optional(),
+  role: z.enum(['user', 'admin', 'manager']).optional(),
+});
 
 // Farm schemas
 export const farm_schema = z.object({
-  ...base_fields,
   id: z.number().int().positive(),
+  name: z.string().min(1).max(200),
+  location: z.string().max(500).optional(),
+  area_hectares: z.number().positive().optional(),
+  size_acres: z.number().positive().optional(),
+  farm_type: z.enum(['organic', 'conventional', 'sustainable', 'mixed']).optional(),
+  metadata: z.string().optional(),
+  owner_id: z.string(),
+  timezone: z.string().max(50).optional(),
+  created_at: z.string().datetime().optional(),
+  updated_at: z.string().datetime().optional(),
+});
+
+export const create_farm_schema = z.object({
   name: z.string().min(1).max(200),
   location: z.string().max(500).optional(),
   area_hectares: z.number().positive().optional(),
@@ -52,23 +53,33 @@ export const farm_schema = z.object({
   timezone: z.string().max(50).optional(),
 });
 
-export const create_farm_schema = farm_schema.pick({
-  name: true,
-  location: true,
-  area_hectares: true,
-  size_acres: true,
-  farm_type: true,
-  metadata: true,
-  owner_id: true,
-  timezone: true,
+export const update_farm_schema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  location: z.string().max(500).optional(),
+  area_hectares: z.number().positive().optional(),
+  size_acres: z.number().positive().optional(),
+  farm_type: z.enum(['organic', 'conventional', 'sustainable', 'mixed']).optional(),
+  metadata: z.string().optional(),
+  timezone: z.string().max(50).optional(),
 });
-
-export const update_farm_schema = create_farm_schema.partial();
 
 // Field schemas
 export const field_schema = z.object({
-  ...base_fields,
   id: z.number().int().positive(),
+  farm_id: z.number().int().positive(),
+  name: z.string().min(1).max(200),
+  area_hectares: z.number().positive().optional(),
+  area_sqm: z.number().positive().optional(),
+  crop_type: z.string().max(100).optional(),
+  notes: z.string().max(1000).optional(),
+  location_type: z.enum(['field', 'barn', 'pasture', 'greenhouse']).default('field'),
+  soil_type: z.string().max(100).optional(),
+  irrigation_type: z.string().max(100).optional(),
+  created_at: z.string().datetime().optional(),
+  updated_at: z.string().datetime().optional(),
+});
+
+export const create_field_schema = z.object({
   farm_id: z.number().int().positive(),
   name: z.string().min(1).max(200),
   area_hectares: z.number().positive().optional(),
@@ -80,23 +91,19 @@ export const field_schema = z.object({
   irrigation_type: z.string().max(100).optional(),
 });
 
-export const create_field_schema = field_schema.pick({
-  farm_id: true,
-  name: true,
-  area_hectares: true,
-  area_sqm: true,
-  crop_type: true,
-  notes: true,
-  location_type: true,
-  soil_type: true,
-  irrigation_type: true,
+export const update_field_schema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  area_hectares: z.number().positive().optional(),
+  area_sqm: z.number().positive().optional(),
+  crop_type: z.string().max(100).optional(),
+  notes: z.string().max(1000).optional(),
+  location_type: z.enum(['field', 'barn', 'pasture', 'greenhouse']).optional(),
+  soil_type: z.string().max(100).optional(),
+  irrigation_type: z.string().max(100).optional(),
 });
-
-export const update_field_schema = create_field_schema.partial();
 
 // Animal schemas
 export const animal_schema = z.object({
-  ...base_fields,
   id: z.number().int().positive(),
   farm_id: z.number().int().positive(),
   name: z.string().max(100).optional(),
@@ -114,30 +121,49 @@ export const animal_schema = z.object({
   location_id: z.string().optional(),
   acquisition_date: z.string().date().optional(),
   acquisition_type: z.enum(['born', 'purchased', 'gift', 'rescue', 'other']).optional(),
+  created_at: z.string().datetime().optional(),
+  updated_at: z.string().datetime().optional(),
 });
 
-export const create_animal_schema = animal_schema.pick({
-  farm_id: true,
-  name: true,
-  species: true,
-  breed: true,
-  date_of_birth: true,
-  sex: true,
-  identification_tag: true,
-  status: true,
-  health_status: true,
-  current_weight: true,
-  notes: true,
-  location_id: true,
-  acquisition_date: true,
-  acquisition_type: true,
+export const create_animal_schema = z.object({
+  farm_id: z.number().int().positive(),
+  name: z.string().max(100).optional(),
+  species: z.string().min(1).max(100),
+  breed: z.string().max(100).optional(),
+  date_of_birth: z.string().date().optional(),
+  sex: z.enum(['male', 'female', 'unknown']).optional(),
+  identification_tag: z.string().max(50).optional(),
+  status: z
+    .enum(['active', 'healthy', 'sick', 'sold', 'deceased', 'pregnant', 'quarantine'])
+    .optional(),
+  health_status: z.enum(['healthy', 'sick', 'recovering', 'critical']).optional(),
+  current_weight: z.number().positive().optional(),
+  notes: z.string().max(1000).optional(),
+  location_id: z.string().optional(),
+  acquisition_date: z.string().date().optional(),
+  acquisition_type: z.enum(['born', 'purchased', 'gift', 'rescue', 'other']).optional(),
 });
 
-export const update_animal_schema = create_animal_schema.partial();
+export const update_animal_schema = z.object({
+  name: z.string().max(100).optional(),
+  species: z.string().min(1).max(100).optional(),
+  breed: z.string().max(100).optional(),
+  date_of_birth: z.string().date().optional(),
+  sex: z.enum(['male', 'female', 'unknown']).optional(),
+  identification_tag: z.string().max(50).optional(),
+  status: z
+    .enum(['active', 'healthy', 'sick', 'sold', 'deceased', 'pregnant', 'quarantine'])
+    .optional(),
+  health_status: z.enum(['healthy', 'sick', 'recovering', 'critical']).optional(),
+  current_weight: z.number().positive().optional(),
+  notes: z.string().max(1000).optional(),
+  location_id: z.string().optional(),
+  acquisition_date: z.string().date().optional(),
+  acquisition_type: z.enum(['born', 'purchased', 'gift', 'rescue', 'other']).optional(),
+});
 
 // Crop schemas
 export const crop_schema = z.object({
-  ...base_fields,
   id: z.number().int().positive(),
   farm_id: z.number().int().positive(),
   field_id: z.number().int().positive().optional(),
@@ -156,31 +182,47 @@ export const crop_schema = z.object({
   actual_yield: z.number().positive().optional(),
   notes: z.string().max(1000).optional(),
   irrigation_schedule: z.string().max(500).optional(),
+  created_at: z.string().datetime().optional(),
+  updated_at: z.string().datetime().optional(),
 });
 
-export const create_crop_schema = crop_schema.pick({
-  farm_id: true,
-  field_id: true,
-  name: true,
-  crop_type: true,
-  variety: true,
-  planting_date: true,
-  expected_harvest_date: true,
-  actual_harvest_date: true,
-  status: true,
-  health_status: true,
-  area_planted: true,
-  expected_yield: true,
-  actual_yield: true,
-  notes: true,
-  irrigation_schedule: true,
+export const create_crop_schema = z.object({
+  farm_id: z.number().int().positive(),
+  field_id: z.number().int().positive().optional(),
+  name: z.string().max(200).optional(),
+  crop_type: z.string().min(1).max(100),
+  variety: z.string().max(100).optional(),
+  planting_date: z.string().date().optional(),
+  expected_harvest_date: z.string().date().optional(),
+  actual_harvest_date: z.string().date().optional(),
+  status: z.enum(['planned', 'planted', 'growing', 'ready', 'harvested', 'failed']).optional(),
+  health_status: z.enum(['healthy', 'stressed', 'diseased', 'pest_damage', 'dead']).optional(),
+  area_planted: z.number().positive().optional(),
+  expected_yield: z.number().positive().optional(),
+  actual_yield: z.number().positive().optional(),
+  notes: z.string().max(1000).optional(),
+  irrigation_schedule: z.string().max(500).optional(),
 });
 
-export const update_crop_schema = create_crop_schema.partial();
+export const update_crop_schema = z.object({
+  field_id: z.number().int().positive().optional(),
+  name: z.string().max(200).optional(),
+  crop_type: z.string().min(1).max(100).optional(),
+  variety: z.string().max(100).optional(),
+  planting_date: z.string().date().optional(),
+  expected_harvest_date: z.string().date().optional(),
+  actual_harvest_date: z.string().date().optional(),
+  status: z.enum(['planned', 'planted', 'growing', 'ready', 'harvested', 'failed']).optional(),
+  health_status: z.enum(['healthy', 'stressed', 'diseased', 'pest_damage', 'dead']).optional(),
+  area_planted: z.number().positive().optional(),
+  expected_yield: z.number().positive().optional(),
+  actual_yield: z.number().positive().optional(),
+  notes: z.string().max(1000).optional(),
+  irrigation_schedule: z.string().max(500).optional(),
+});
 
 // Task schemas
 export const task_schema = z.object({
-  ...base_fields,
   id: z.number().int().positive(),
   farm_id: z.number().int().positive(),
   title: z.string().min(1).max(200),
@@ -195,26 +237,42 @@ export const task_schema = z.object({
     .optional(),
   related_entity_type: z.enum(['animal', 'crop', 'field', 'equipment']).optional(),
   related_entity_id: z.number().int().positive().optional(),
+  created_at: z.string().datetime().optional(),
+  updated_at: z.string().datetime().optional(),
 });
 
-export const create_task_schema = task_schema.pick({
-  farm_id: true,
-  title: true,
-  description: true,
-  assigned_to: true,
-  status: true,
-  priority: true,
-  due_date: true,
-  task_type: true,
-  related_entity_type: true,
-  related_entity_id: true,
+export const create_task_schema = z.object({
+  farm_id: z.number().int().positive(),
+  title: z.string().min(1).max(200),
+  description: z.string().max(1000).optional(),
+  assigned_to: z.string().optional(),
+  status: z.enum(['pending', 'in_progress', 'completed', 'cancelled']).optional(),
+  priority: z.enum(['low', 'medium', 'normal', 'high', 'urgent']).optional(),
+  due_date: z.string().datetime().optional(),
+  task_type: z
+    .enum(['planting', 'harvesting', 'feeding', 'maintenance', 'inspection', 'other'])
+    .optional(),
+  related_entity_type: z.enum(['animal', 'crop', 'field', 'equipment']).optional(),
+  related_entity_id: z.number().int().positive().optional(),
 });
 
-export const update_task_schema = create_task_schema.partial();
+export const update_task_schema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  description: z.string().max(1000).optional(),
+  assigned_to: z.string().optional(),
+  status: z.enum(['pending', 'in_progress', 'completed', 'cancelled']).optional(),
+  priority: z.enum(['low', 'medium', 'normal', 'high', 'urgent']).optional(),
+  due_date: z.string().datetime().optional(),
+  completed_at: z.string().datetime().optional(),
+  task_type: z
+    .enum(['planting', 'harvesting', 'feeding', 'maintenance', 'inspection', 'other'])
+    .optional(),
+  related_entity_type: z.enum(['animal', 'crop', 'field', 'equipment']).optional(),
+  related_entity_id: z.number().int().positive().optional(),
+});
 
 // Finance entry schemas
 export const finance_entry_schema = z.object({
-  ...base_fields,
   id: z.number().int().positive(),
   farm_id: z.number().int().positive(),
   amount: z.number(),
@@ -226,27 +284,58 @@ export const finance_entry_schema = z.object({
   payment_method: z.enum(['cash', 'card', 'bank_transfer', 'check']).optional(),
   reference_number: z.string().max(100).optional(),
   vendor_customer: z.string().max(200).optional(),
+  created_at: z.string().datetime().optional(),
+  updated_at: z.string().datetime().optional(),
 });
 
-export const create_finance_entry_schema = finance_entry_schema.pick({
-  farm_id: true,
-  amount: true,
-  currency: true,
-  entry_type: true,
-  category: true,
-  description: true,
-  date: true,
-  payment_method: true,
-  reference_number: true,
-  vendor_customer: true,
+export const create_finance_entry_schema = z.object({
+  farm_id: z.number().int().positive(),
+  amount: z.number(),
+  currency: z.string().length(3).optional(),
+  entry_type: z.enum(['income', 'expense']),
+  category: z.enum(['seeds', 'feed', 'equipment', 'labor', 'sales', 'subsidies', 'other']),
+  description: z.string().max(500),
+  date: z.string().date(),
+  payment_method: z.enum(['cash', 'card', 'bank_transfer', 'check']).optional(),
+  reference_number: z.string().max(100).optional(),
+  vendor_customer: z.string().max(200).optional(),
 });
 
-export const update_finance_entry_schema = create_finance_entry_schema.partial();
+export const update_finance_entry_schema = z.object({
+  amount: z.number().optional(),
+  currency: z.string().length(3).optional(),
+  entry_type: z.enum(['income', 'expense']).optional(),
+  category: z
+    .enum(['seeds', 'feed', 'equipment', 'labor', 'sales', 'subsidies', 'other'])
+    .optional(),
+  description: z.string().max(500).optional(),
+  date: z.string().date().optional(),
+  payment_method: z.enum(['cash', 'card', 'bank_transfer', 'check']).optional(),
+  reference_number: z.string().max(100).optional(),
+  vendor_customer: z.string().max(200).optional(),
+});
 
 // Inventory schemas
 export const inventory_schema = z.object({
-  ...base_fields,
   id: z.number().int().positive(),
+  farm_id: z.number().int().positive(),
+  name: z.string().min(1).max(200),
+  category: z.enum(['seed', 'feed', 'fertilizer', 'pesticide', 'equipment', 'medicine', 'other']),
+  quantity: z.number().nonnegative(),
+  unit: z.string().max(20),
+  unit_cost: z.number().positive().optional(),
+  total_cost: z.number().positive().optional(),
+  location: z.string().max(200).optional(),
+  supplier: z.string().max(200).optional(),
+  purchase_date: z.string().date().optional(),
+  expiry_date: z.string().date().optional(),
+  minimum_quantity: z.number().nonnegative().optional(),
+  notes: z.string().max(1000).optional(),
+  created_at: z.string().datetime().optional(),
+  updated_at: z.string().datetime().optional(),
+});
+
+export const create_inventory_schema = z.object({
   farm_id: z.number().int().positive(),
   name: z.string().min(1).max(200),
   category: z.enum(['seed', 'feed', 'fertilizer', 'pesticide', 'equipment', 'medicine', 'other']),
@@ -262,23 +351,22 @@ export const inventory_schema = z.object({
   notes: z.string().max(1000).optional(),
 });
 
-export const create_inventory_schema = inventory_schema.pick({
-  farm_id: true,
-  name: true,
-  category: true,
-  quantity: true,
-  unit: true,
-  unit_cost: true,
-  total_cost: true,
-  location: true,
-  supplier: true,
-  purchase_date: true,
-  expiry_date: true,
-  minimum_quantity: true,
-  notes: true,
+export const update_inventory_schema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  category: z
+    .enum(['seed', 'feed', 'fertilizer', 'pesticide', 'equipment', 'medicine', 'other'])
+    .optional(),
+  quantity: z.number().nonnegative().optional(),
+  unit: z.string().max(20).optional(),
+  unit_cost: z.number().positive().optional(),
+  total_cost: z.number().positive().optional(),
+  location: z.string().max(200).optional(),
+  supplier: z.string().max(200).optional(),
+  purchase_date: z.string().date().optional(),
+  expiry_date: z.string().date().optional(),
+  minimum_quantity: z.number().nonnegative().optional(),
+  notes: z.string().max(1000).optional(),
 });
-
-export const update_inventory_schema = create_inventory_schema.partial();
 
 // Authentication schemas
 export const login_schema = z.object({

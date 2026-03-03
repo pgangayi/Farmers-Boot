@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, MapPin, TrendingUp, Edit2, Trash2, Eye } from 'lucide-react';
+import { Plus, MapPin, TrendingUp, Edit2, Trash2, Eye, Home } from 'lucide-react';
 import { useAuth } from '../hooks/AuthContext';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -15,6 +15,7 @@ import { LoadingErrorContent } from '../components/ui/LoadingStates';
 import { useConfirmation, ConfirmDialogs } from '../components/ui/ConfirmationDialog';
 import { UnifiedModal } from '../components/ui/UnifiedModal';
 import { FirstTimeSetup as FirstTimeWizard } from '../components/wizards/FirstTimeSetup';
+import { Breadcrumbs, useScrollAnimation } from '@farmers-boot/shared/components';
 
 // Import from unified API layer
 import {
@@ -104,6 +105,7 @@ export function FarmsPage() {
         area_hectares: formData.area_hectares ? Number(formData.area_hectares) : undefined,
         timezone: formData.timezone as string | undefined,
         owner_id: user?.id || '',
+        is_active: true,
       });
       setShowCreateForm(false);
     } catch (e) {
@@ -146,6 +148,20 @@ export function FarmsPage() {
     refetch();
   };
 
+  // ---- Render ----
+
+  // Breadcrumb items
+  const breadcrumbItems = [
+    { label: 'Home', href: '/', icon: <Home className="h-4 w-4" /> },
+    { label: 'Farms' },
+  ];
+
+  // Scroll animation hook for page content - must be called before any early returns
+  const { ref: pageRef, isInView } = useScrollAnimation({
+    threshold: 0.1,
+    triggerOnce: true,
+  });
+
   // ---- Auth Check ----
 
   if (!isAuthenticated()) {
@@ -162,11 +178,17 @@ export function FarmsPage() {
     );
   }
 
-  // ---- Render ----
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Breadcrumbs */}
+        <div className="mb-4">
+          <Breadcrumbs
+            items={breadcrumbItems}
+            onItemClick={item => item.href && navigate(item.href)}
+          />
+        </div>
+
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -271,89 +293,96 @@ export function FarmsPage() {
           </div>
         )}
 
-        {/* Content */}
-        <LoadingErrorContent
-          isLoading={isLoading}
-          error={error?.message || null}
-          loadingMessage="Loading farms..."
-          errorTitle="Error Loading Farms"
-          errorMessage={error?.message}
-          onRetry={() => refetch()}
+        {/* Content with scroll animation */}
+        <div
+          ref={pageRef}
+          className={`transition-all duration-500 ${
+            isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}
         >
-          {farms.length === 0 ? (
-            <Card className="text-center py-12">
-              <CardContent>
-                <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No farms yet</h3>
-                <p className="text-gray-600 mb-6">Get started by creating your first farm.</p>
-                <Button onClick={() => setShowCreateForm(true)} className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Create Your First Farm
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {farms.map(farm => (
-                <Card key={farm.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-lg">{farm.name}</CardTitle>
-                        {farm.location && (
-                          <CardDescription className="flex items-center gap-1 mt-1">
-                            <MapPin className="h-3 w-3" />
-                            {farm.location}
-                          </CardDescription>
-                        )}
-                      </div>
-                      <Badge variant="outline" className="text-xs">
-                        {farm.area_hectares ? `${farm.area_hectares} ha` : 'No size'}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {farm.timezone && (
-                        <div className="text-sm text-gray-600">
-                          <span className="font-medium">Timezone:</span> {farm.timezone}
+          <LoadingErrorContent
+            isLoading={isLoading}
+            error={error?.message || null}
+            loadingMessage="Loading farms..."
+            errorTitle="Error Loading Farms"
+            errorMessage={error?.message}
+            onRetry={() => refetch()}
+          >
+            {farms.length === 0 ? (
+              <Card className="text-center py-12">
+                <CardContent>
+                  <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No farms yet</h3>
+                  <p className="text-gray-600 mb-6">Get started by creating your first farm.</p>
+                  <Button onClick={() => setShowCreateForm(true)} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Create Your First Farm
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {farms.map(farm => (
+                  <Card key={farm.id} className="hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="text-lg">{farm.name}</CardTitle>
+                          {farm.location && (
+                            <CardDescription className="flex items-center gap-1 mt-1">
+                              <MapPin className="h-3 w-3" />
+                              {farm.location}
+                            </CardDescription>
+                          )}
                         </div>
-                      )}
-                      <div className="text-xs text-gray-400">
-                        Created:{' '}
-                        {farm.created_at ? new Date(farm.created_at).toLocaleDateString() : 'N/A'}
+                        <Badge variant="outline" className="text-xs">
+                          {farm.area_hectares ? `${farm.area_hectares} ha` : 'No size'}
+                        </Badge>
                       </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {farm.timezone && (
+                          <div className="text-sm text-gray-600">
+                            <span className="font-medium">Timezone:</span> {farm.timezone}
+                          </div>
+                        )}
+                        <div className="text-xs text-gray-400">
+                          Created:{' '}
+                          {farm.created_at ? new Date(farm.created_at).toLocaleDateString() : 'N/A'}
+                        </div>
 
-                      {/* Actions */}
-                      <div className="flex gap-2 pt-3 border-t">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigate(`/farms/${farm.id}`)}
-                          className="flex-1"
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          View
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => setEditingFarm(farm)}>
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteFarm(farm)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {/* Actions */}
+                        <div className="flex gap-2 pt-3 border-t">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/farms/${farm.id}`)}
+                            className="flex-1"
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => setEditingFarm(farm)}>
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteFarm(farm)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </LoadingErrorContent>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </LoadingErrorContent>
+        </div>
       </div>
       {/* Create Farm Modal */}
       <UnifiedModal

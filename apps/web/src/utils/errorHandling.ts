@@ -71,7 +71,7 @@ export class AppError extends Error {
 
   static fromApiError(apiError: ApiErrorResponse): AppError {
     return new AppError(
-      apiError.message,
+      apiError.message ?? 'An API error occurred',
       apiError.error,
       apiError.status_code,
       apiError.details,

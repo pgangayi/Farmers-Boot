@@ -118,11 +118,12 @@ export function DashboardRouter({ className = '', onNavigate }: DashboardRouterP
   }, [farms]);
 
   // Calculate quick stats
+  // TODO: Implement alerts API to get real alert counts
   const quickStats = useMemo(() => {
     return {
       totalFarms: farms?.length || 0,
       activeModules: DASHBOARD_CARDS.length,
-      alerts: 3, // This would come from an alerts API
+      alerts: 0, // Will be populated from alerts API when available
     };
   }, [farms]);
 
@@ -223,31 +224,10 @@ export function DashboardRouter({ className = '', onNavigate }: DashboardRouterP
             <h3 className="font-semibold text-gray-900">Recent Activity</h3>
           </div>
           <CardContent className="p-4">
-            <div className="space-y-4">
-              {[
-                { action: 'Added new crop planting', time: '2 hours ago', type: 'crop' },
-                { action: 'Updated livestock records', time: '5 hours ago', type: 'livestock' },
-                { action: 'Recorded expense entry', time: 'Yesterday', type: 'finance' },
-                { action: 'Completed task: Irrigation check', time: 'Yesterday', type: 'task' },
-              ].map((activity, index) => (
-                <div key={index} className="flex items-center gap-3">
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      activity.type === 'crop'
-                        ? 'bg-green-500'
-                        : activity.type === 'livestock'
-                          ? 'bg-amber-500'
-                          : activity.type === 'finance'
-                            ? 'bg-emerald-500'
-                            : 'bg-orange-500'
-                    }`}
-                  />
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900">{activity.action}</p>
-                    <p className="text-xs text-gray-500">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
+            {/* TODO: Connect to real activity feed from audit logs or activity API */}
+            <div className="text-center py-8 text-gray-500">
+              <p className="text-sm">Activity feed coming soon</p>
+              <p className="text-xs mt-1">Recent actions will appear here</p>
             </div>
           </CardContent>
         </Card>
@@ -261,34 +241,11 @@ export function DashboardRouter({ className = '', onNavigate }: DashboardRouterP
             </h3>
           </div>
           <CardContent className="p-4">
-            <div className="space-y-3">
-              {[
-                {
-                  message: 'Low inventory: Fertilizer stock below threshold',
-                  severity: 'high',
-                  time: '1 hour ago',
-                },
-                {
-                  message: 'Weather alert: Heavy rain expected tomorrow',
-                  severity: 'medium',
-                  time: '3 hours ago',
-                },
-                { message: 'Task overdue: Pest inspection', severity: 'low', time: '1 day ago' },
-              ].map((alert, index) => (
-                <div
-                  key={index}
-                  className={`p-3 rounded-lg ${
-                    alert.severity === 'high'
-                      ? 'bg-red-50 border border-red-200'
-                      : alert.severity === 'medium'
-                        ? 'bg-amber-50 border border-amber-200'
-                        : 'bg-blue-50 border border-blue-200'
-                  }`}
-                >
-                  <p className="text-sm font-medium text-gray-900">{alert.message}</p>
-                  <p className="text-xs text-gray-500 mt-1">{alert.time}</p>
-                </div>
-              ))}
+            {/* TODO: Connect to real alerts API */}
+            <div className="text-center py-8 text-gray-500">
+              <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+              <p className="text-sm">No active alerts</p>
+              <p className="text-xs mt-1">Alerts will appear here when triggered</p>
             </div>
           </CardContent>
         </Card>
@@ -300,25 +257,26 @@ export function DashboardRouter({ className = '', onNavigate }: DashboardRouterP
           <h3 className="font-semibold text-gray-900">Farm Summary</h3>
         </div>
         <CardContent className="p-4">
+          {/* TODO: Connect to real data sources for these stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-gray-50 rounded-lg">
               <Sprout className="w-8 h-8 text-green-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-gray-900">12</div>
+              <div className="text-2xl font-bold text-gray-900">-</div>
               <div className="text-sm text-gray-500">Active Crops</div>
             </div>
             <div className="text-center p-4 bg-gray-50 rounded-lg">
               <Tractor className="w-8 h-8 text-amber-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-gray-900">45</div>
+              <div className="text-2xl font-bold text-gray-900">-</div>
               <div className="text-sm text-gray-500">Livestock</div>
             </div>
             <div className="text-center p-4 bg-gray-50 rounded-lg">
               <Calendar className="w-8 h-8 text-orange-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-gray-900">8</div>
+              <div className="text-2xl font-bold text-gray-900">-</div>
               <div className="text-sm text-gray-500">Pending Tasks</div>
             </div>
             <div className="text-center p-4 bg-gray-50 rounded-lg">
               <DollarSign className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-gray-900">$2.4k</div>
+              <div className="text-2xl font-bold text-gray-900">-</div>
               <div className="text-sm text-gray-500">This Month</div>
             </div>
           </div>

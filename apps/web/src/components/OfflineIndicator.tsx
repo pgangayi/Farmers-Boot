@@ -83,6 +83,7 @@ export function SyncStatus({ className, compact = false }: SyncStatusProps) {
       const timer = setTimeout(() => setShowSuccess(false), 3000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [syncStats.synced, isSyncing]);
 
   if (compact) {

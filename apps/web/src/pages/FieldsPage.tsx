@@ -177,7 +177,10 @@ export function FieldsPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Breadcrumbs className="mb-0" />
+          <Breadcrumbs
+            items={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Fields' }]}
+            className="mb-0"
+          />
         </div>
       </div>
 

@@ -20,6 +20,7 @@ import {
   Loader2,
   AlertTriangle,
   MapPin,
+  Home,
 } from 'lucide-react';
 import { useFarms } from '../hooks';
 import { useCrops, useAnimals, useInventory, useTasks, useFinance } from '../hooks';
@@ -45,6 +46,13 @@ import {
   getSelectedFarm,
   logger,
 } from '../utils/dashboard';
+import {
+  Breadcrumbs,
+  useScrollAnimation,
+  useSwipe,
+  useIsMobile,
+  DensityToggle,
+} from '@farmers-boot/shared/components';
 
 const TEXT_GREEN_600 = 'text-green-600';
 const TEXT_RED_600 = 'text-red-600';
@@ -71,6 +79,24 @@ export default function Dashboard() {
     url: BACKGROUND_IMAGE_URL,
   });
   const farmSelectorRef = useRef<HTMLDivElement>(null);
+  const mainContentRef = useRef<HTMLDivElement>(null);
+
+  // Shared hooks for scroll animations and mobile interactions
+  const isMobile = useIsMobile();
+  const { ref: scrollRef, isInView } = useScrollAnimation({
+    threshold: 0.1,
+    triggerOnce: true,
+  });
+  const { ref: swipeRef, swipeDirection } = useSwipe({
+    threshold: 50,
+    timeout: 300,
+  });
+
+  // Breadcrumb items
+  const breadcrumbItems = [
+    { label: 'Home', href: '/', icon: <Home className="h-4 w-4" /> },
+    { label: 'Dashboard' },
+  ];
 
   // Live data hooks
   const { data: farms = [], isLoading: farmsLoading, error: farmsError } = useFarms();
@@ -238,6 +264,22 @@ export default function Dashboard() {
     [cropStats.total, animalStats.active, taskStats.pending]
   );
 
+  // Handle swipe navigation between tabs on mobile
+  useEffect(() => {
+    if (!isMobile || !swipeDirection) return;
+
+    const tabIds = tabs.map(t => t.id);
+    const currentIndex = tabIds.indexOf(activeTab);
+
+    if (swipeDirection === 'left' && currentIndex < tabIds.length - 1) {
+      const nextTab = tabIds[currentIndex + 1];
+      if (nextTab) setActiveTab(nextTab);
+    } else if (swipeDirection === 'right' && currentIndex > 0) {
+      const prevTab = tabIds[currentIndex - 1];
+      if (prevTab) setActiveTab(prevTab);
+    }
+  }, [swipeDirection, activeTab, tabs, isMobile]);
+
   // Handlers with proper cleanup
   const handleFarmSelect = useCallback((farmId: string) => {
     setSelectedFarm(farmId);
@@ -343,6 +385,14 @@ export default function Dashboard() {
       >
         {/* Wallpaper overlay for better readability */}
         <div className="absolute inset-0 bg-white/70 backdrop-blur-[0.5px]"></div>
+
+        {/* Breadcrumbs - Desktop Only */}
+        <div className="hidden lg:block max-w-7xl mx-auto px-4 py-2">
+          <Breadcrumbs
+            items={breadcrumbItems}
+            onItemClick={item => item.href && navigate(item.href)}
+          />
+        </div>
 
         {/* Modern Mobile Header */}
         <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200 shadow-sm">
@@ -462,6 +512,10 @@ export default function Dashboard() {
                 </button>
               </div>
             </div>
+            {/* Density Toggle - Desktop Only */}
+            <div className="hidden lg:flex items-center justify-end mt-2 pt-2 border-t border-gray-100">
+              <DensityToggle />
+            </div>
           </div>
 
           {/* Mobile Navigation Menu */}
@@ -519,7 +573,16 @@ export default function Dashboard() {
           </div>
         </header>
 
-        <main className="max-w-7xl mx-auto px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        <main
+          ref={el => {
+            // Combine refs for scroll animation and swipe detection
+            (scrollRef as React.MutableRefObject<HTMLElement | null>).current = el;
+            (swipeRef as React.MutableRefObject<HTMLElement | null>).current = el;
+          }}
+          className={`max-w-7xl mx-auto px-4 py-4 sm:py-6 space-y-4 sm:space-y-6 transition-all duration-500 ${
+            isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}
+        >
           {activeTab === TAB_OVERVIEW && (
             <>
               {/* Quick Stats Grid */}

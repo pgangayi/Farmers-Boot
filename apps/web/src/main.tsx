@@ -16,6 +16,7 @@ import { OfflineWrapper, OfflineBanner, SyncStatus } from './components/OfflineI
 import { useOfflineSync } from './hooks/useOfflineSync';
 import { initializeDatabase } from './lib/offline-db';
 import { PageLoading } from './components/common/LoadingStates';
+import { ContentDensityProvider } from '@farmers-boot/shared/components';
 
 // Route constants for type safety
 export const ROUTES = {
@@ -214,7 +215,7 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
           const newWorker = registration.installing;
 
           newWorker?.addEventListener('statechange', () => {
-            if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+            if (newWorker?.state === 'activated' && navigator.serviceWorker.controller) {
               // New version available - could show notification to user
               console.log('New version available! Please refresh.');
             }
@@ -285,131 +286,133 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <QueryClientProvider client={queryClient}>
             {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
             <AppInitializer>
-              <OfflineWrapper showBanner={true} showSyncStatus={true}>
-                <BrowserRouter>
-                  <Suspense fallback={<LoadingScreen />}>
-                    <Routes>
-                      <Route path={ROUTES.HOME} element={<Home />} />
-                      <Route path={ROUTES.LOGIN} element={<LoginPage />} />
-                      <Route path={ROUTES.SIGNUP} element={<SignupPage />} />
-                      <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
-                      <Route path={ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
+              <ContentDensityProvider defaultDensity="comfortable">
+                <OfflineWrapper showBanner={true} showSyncStatus={true}>
+                  <BrowserRouter>
+                    <Suspense fallback={<LoadingScreen />}>
+                      <Routes>
+                        <Route path={ROUTES.HOME} element={<Home />} />
+                        <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+                        <Route path={ROUTES.SIGNUP} element={<SignupPage />} />
+                        <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
+                        <Route path={ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
 
-                      {/* Protected Routes */}
-                      <Route
-                        path={ROUTES.DASHBOARD}
-                        element={
-                          <ProtectedRoute>
-                            <RouteErrorBoundary>
-                              <Dashboard />
-                            </RouteErrorBoundary>
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path={ROUTES.FARMS}
-                        element={
-                          <ProtectedRoute>
-                            <RouteErrorBoundary>
-                              <FarmsPage />
-                            </RouteErrorBoundary>
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path={ROUTES.FIELDS}
-                        element={
-                          <ProtectedRoute>
-                            <RouteErrorBoundary>
-                              <FieldsPage />
-                            </RouteErrorBoundary>
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path={ROUTES.LIVESTOCK}
-                        element={
-                          <ProtectedRoute>
-                            <RouteErrorBoundary>
-                              <LivestockPage />
-                            </RouteErrorBoundary>
-                          </ProtectedRoute>
-                        }
-                      />
-                      {/* Redirect legacy /animals to /livestock if needed, or handle via ROUTES constant aliases */}
-                      {ROUTES.ANIMALS !== ROUTES.LIVESTOCK && (
+                        {/* Protected Routes */}
                         <Route
-                          path={ROUTES.ANIMALS}
-                          element={<Navigate to={ROUTES.LIVESTOCK} replace />}
+                          path={ROUTES.DASHBOARD}
+                          element={
+                            <ProtectedRoute>
+                              <RouteErrorBoundary>
+                                <Dashboard />
+                              </RouteErrorBoundary>
+                            </ProtectedRoute>
+                          }
                         />
-                      )}
-                      <Route
-                        path={ROUTES.CROPS}
-                        element={
-                          <ProtectedRoute>
-                            <RouteErrorBoundary>
-                              <CropsPage />
-                            </RouteErrorBoundary>
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path={ROUTES.TASKS}
-                        element={
-                          <ProtectedRoute>
-                            <RouteErrorBoundary>
-                              <TasksPage />
-                            </RouteErrorBoundary>
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path={ROUTES.INVENTORY}
-                        element={
-                          <ProtectedRoute>
-                            <RouteErrorBoundary>
-                              <InventoryPage />
-                            </RouteErrorBoundary>
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path={ROUTES.FINANCE}
-                        element={
-                          <ProtectedRoute>
-                            <RouteErrorBoundary>
-                              <FinancePage />
-                            </RouteErrorBoundary>
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path={ROUTES.QUEUE}
-                        element={
-                          <ProtectedRoute>
-                            <RouteErrorBoundary>
-                              <QueuePage />
-                            </RouteErrorBoundary>
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path={ROUTES.ANALYTICS}
-                        element={
-                          <ProtectedRoute>
-                            <RouteErrorBoundary>
-                              <AnalyticsPage />
-                            </RouteErrorBoundary>
-                          </ProtectedRoute>
-                        }
-                      />
+                        <Route
+                          path={ROUTES.FARMS}
+                          element={
+                            <ProtectedRoute>
+                              <RouteErrorBoundary>
+                                <FarmsPage />
+                              </RouteErrorBoundary>
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path={ROUTES.FIELDS}
+                          element={
+                            <ProtectedRoute>
+                              <RouteErrorBoundary>
+                                <FieldsPage />
+                              </RouteErrorBoundary>
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path={ROUTES.LIVESTOCK}
+                          element={
+                            <ProtectedRoute>
+                              <RouteErrorBoundary>
+                                <LivestockPage />
+                              </RouteErrorBoundary>
+                            </ProtectedRoute>
+                          }
+                        />
+                        {/* Redirect legacy /animals to /livestock if needed, or handle via ROUTES constant aliases */}
+                        {ROUTES.ANIMALS !== ROUTES.LIVESTOCK && (
+                          <Route
+                            path={ROUTES.ANIMALS}
+                            element={<Navigate to={ROUTES.LIVESTOCK} replace />}
+                          />
+                        )}
+                        <Route
+                          path={ROUTES.CROPS}
+                          element={
+                            <ProtectedRoute>
+                              <RouteErrorBoundary>
+                                <CropsPage />
+                              </RouteErrorBoundary>
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path={ROUTES.TASKS}
+                          element={
+                            <ProtectedRoute>
+                              <RouteErrorBoundary>
+                                <TasksPage />
+                              </RouteErrorBoundary>
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path={ROUTES.INVENTORY}
+                          element={
+                            <ProtectedRoute>
+                              <RouteErrorBoundary>
+                                <InventoryPage />
+                              </RouteErrorBoundary>
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path={ROUTES.FINANCE}
+                          element={
+                            <ProtectedRoute>
+                              <RouteErrorBoundary>
+                                <FinancePage />
+                              </RouteErrorBoundary>
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path={ROUTES.QUEUE}
+                          element={
+                            <ProtectedRoute>
+                              <RouteErrorBoundary>
+                                <QueuePage />
+                              </RouteErrorBoundary>
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path={ROUTES.ANALYTICS}
+                          element={
+                            <ProtectedRoute>
+                              <RouteErrorBoundary>
+                                <AnalyticsPage />
+                              </RouteErrorBoundary>
+                            </ProtectedRoute>
+                          }
+                        />
 
-                      {/* 404 Not Found */}
-                      <Route path="*" element={<NotFoundPage />} />
-                    </Routes>
-                  </Suspense>
-                </BrowserRouter>
-              </OfflineWrapper>
+                        {/* 404 Not Found */}
+                        <Route path="*" element={<NotFoundPage />} />
+                      </Routes>
+                    </Suspense>
+                  </BrowserRouter>
+                </OfflineWrapper>
+              </ContentDensityProvider>
             </AppInitializer>
           </QueryClientProvider>
         </ToastProvider>

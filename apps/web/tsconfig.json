@@ -47,7 +47,11 @@
     "dist-types",
     "coverage",
     "playwright-report",
-    "test-results"
+    "test-results",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/__tests__/**",
+    "**/e2e/**"
   ],
   "references": [{ "path": "./tsconfig.node.json" }, { "path": "../../packages/shared" }]
 }

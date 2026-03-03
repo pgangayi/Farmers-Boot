@@ -84,6 +84,9 @@ export type {
   QueryFilters,
   CreateRequest,
   UpdateRequest,
+  CreateHealthRecordRequest,
+  CreateProductionRecordRequest,
+  CreateBreedingRecordRequest,
 
   // UI types
   ModalField,

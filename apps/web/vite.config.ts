@@ -30,8 +30,8 @@ const fixChromeExtensionPlugin = (): Plugin => ({
   },
 });
 
-// Supabase local development URL
-const SUPABASE_LOCAL_URL = 'http://localhost:54321';
+// Supabase local development URL (using existing FMS instance)
+const SUPABASE_LOCAL_URL = 'http://localhost:55321';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -40,6 +40,8 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
       '@mui/material/Unstable_Grid2': '@mui/material/Unstable_Grid2',
+      '@farmers-boot/shared': path.resolve(__dirname, '../../packages/shared/src'),
+      '@farmers-boot/shared/*': path.resolve(__dirname, '../../packages/shared/src/*'),
     },
   },
   plugins: [
@@ -238,9 +240,9 @@ export default defineConfig({
     chunkSizeWarningLimit: 500,
   },
   server: {
-    port: 5000,
+    port: 5173,
     host: 'localhost',
-    strictPort: false,
+    strictPort: true,
     fs: {
       strict: true,
     },

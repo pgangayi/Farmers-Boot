@@ -18,7 +18,7 @@ export interface InfoCategory {
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  metadata: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface InfoTopic {
@@ -59,7 +59,7 @@ export interface InfoTopicContext {
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  metadata: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
   // Joined fields
   topic?: InfoTopic;
 }
@@ -72,7 +72,7 @@ export interface InfoTopicView {
   context_key?: string;
   viewed_at: string;
   session_id?: string;
-  metadata: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface InfoTopicFeedback {
@@ -84,7 +84,7 @@ export interface InfoTopicFeedback {
   comment?: string;
   created_at: string;
   updated_at: string;
-  metadata: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
 }
 
 // ============================================================================

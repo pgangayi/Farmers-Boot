@@ -22,6 +22,7 @@ export const LookupService = {
       species: b.species,
       characteristics: (b as Breed & { description?: string }).description || '',
       created_at: b.created_at,
+      updated_at: b.updated_at || b.created_at,
     }));
   },
 
@@ -37,6 +38,7 @@ export const LookupService = {
       species: b.species,
       characteristics: (b as Breed & { description?: string }).description || '',
       created_at: b.created_at,
+      updated_at: b.updated_at || b.created_at,
     };
   },
 

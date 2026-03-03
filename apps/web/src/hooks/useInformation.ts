@@ -180,14 +180,12 @@ export function useInformation(config: Partial<InformationConfig> = {}) {
         if (cached) return cached;
 
         const response = await apiClient.get<InfoTopic>(`info_topics/${topicId}`, {
-          params: {
-            is_active: `eq.${true}`,
-          },
+          single: true,
         });
 
         if (response) {
-          setCachedTopic(response as any);
-          return response as any;
+          setCachedTopic(response);
+          return response;
         }
 
         return null;
@@ -229,9 +227,9 @@ export function useInformation(config: Partial<InformationConfig> = {}) {
     try {
       const response = await apiClient.get<InfoTopic[]>('info_topics', {
         params: {
-          is_featured: `eq.${true}`,
-          is_active: `eq.${true}`,
-          limit,
+          is_featured: 'eq.true',
+          is_active: 'eq.true',
+          limit: String(limit),
           order: 'view_count.desc',
         },
       });
@@ -249,7 +247,7 @@ export function useInformation(config: Partial<InformationConfig> = {}) {
       const response = await apiClient.get<InfoTopic[]>('info_topics', {
         params: {
           category_id: `eq.${categoryId}`,
-          is_active: `eq.${true}`,
+          is_active: 'eq.true',
           order: 'title.asc',
         },
       });
@@ -389,7 +387,17 @@ export function useInformation(config: Partial<InformationConfig> = {}) {
 }
 
 // Export types for external use
-export type { InformationConfig, CacheEntry, InfoSearchResult };
+export type { InformationConfig, CacheEntry, InfoSearchResult, UseInformationReturn };
+
+// Export parameter types
+export type {
+  GetTopicByContextParams,
+  SearchTopicsParams,
+  RecordViewParams,
+  SubmitFeedbackParams,
+  InfoTopic,
+  InfoTopicContext,
+};
 
 // Export the hook as default
 export default useInformation;

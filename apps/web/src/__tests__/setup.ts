@@ -307,13 +307,14 @@ const customMatchers = {
 expect.extend(customMatchers);
 
 // Extend Vitest matchers type
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Vi {
-    interface JestAssertion<T = any> {
-      toBeWithinRange(floor: number, ceiling: number): T;
-      toBeValidUuid(): T;
-    }
+declare module 'vitest' {
+  interface Assertion<T = any> {
+    toBeWithinRange(floor: number, ceiling: number): T;
+    toBeValidUuid(): T;
+  }
+  interface AsymmetricMatchersContaining {
+    toBeWithinRange(floor: number, ceiling: number): unknown;
+    toBeValidUuid(): unknown;
   }
 }
 

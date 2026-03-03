@@ -123,7 +123,7 @@ export function LocationsPage() {
   const filteredLocations = locations.filter(
     (location: Location) =>
       location.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      location.type.toLowerCase().includes(searchTerm.toLowerCase())
+      location.type?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleDelete = async (location: Location) => {
@@ -135,14 +135,13 @@ export function LocationsPage() {
 
   const handleCreate = (data: Record<string, any>) => {
     // Transform simple form data to typed request
-    const request: CreateRequest<Location> = {
+    const request = {
       name: data.name,
       type: data.type,
-      location_type: data.type,
       description: data.description,
       capacity: data.capacity ? Number(data.capacity) : undefined,
       farm_id: currentFarm.id,
-    };
+    } as unknown as CreateRequest<Location>;
     createMutation.mutate(request, {
       onSuccess: () => setShowCreateModal(false),
     });
@@ -322,7 +321,8 @@ export function LocationsPage() {
         >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredLocations.map((location: Location) => {
-              const IconComponent = locationTypeIcons[location.type] || locationTypeIcons.other;
+              const locationType = location.type || 'other';
+              const IconComponent = locationTypeIcons[locationType] || locationTypeIcons.other;
               return (
                 <div
                   key={location.id}
@@ -336,7 +336,7 @@ export function LocationsPage() {
                       <div>
                         <h3 className="font-semibold text-gray-900">{location.name}</h3>
                         <p className="text-sm text-gray-600 capitalize">
-                          {locationTypeLabels[location.type] || location.type}
+                          {locationTypeLabels[locationType] || locationType}
                         </p>
                       </div>
                     </div>

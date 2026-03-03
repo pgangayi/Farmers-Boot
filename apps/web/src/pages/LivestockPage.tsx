@@ -1,9 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/AuthContext';
-import { Plus, Heart, TrendingUp, Stethoscope, Droplets, Ruler, Calendar } from 'lucide-react';
+import {
+  Plus,
+  Heart,
+  TrendingUp,
+  Stethoscope,
+  Droplets,
+  Ruler,
+  Calendar,
+  Home,
+} from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { Breadcrumbs } from '../components/Breadcrumbs';
 import { LoadingErrorContent } from '../components/ui/LoadingStates';
+import { Breadcrumbs, useScrollAnimation, useSwipe } from '@farmers-boot/shared/components';
 import { useConfirmation, ConfirmDialogs } from '../components/ui/ConfirmationDialog';
 import { UnifiedModal } from '../components/ui/UnifiedModal';
 import { useToast } from '../components/ui/use-toast';
@@ -67,9 +77,37 @@ const defaultFilters: FilterState = {
 // ============================================================================
 
 export default function LivestockPage() {
+  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { currentFarm } = useFarmWithSelection();
   const [activeTab, setActiveTab] = useState<TabValues>('list');
+
+  // Shared hooks
+  const { ref: scrollRef, isInView } = useScrollAnimation({
+    threshold: 0.1,
+    triggerOnce: true,
+  });
+  const { ref: swipeRef, swipeDirection } = useSwipe({
+    threshold: 50,
+    timeout: 300,
+  });
+
+  // Handle swipe navigation between tabs on mobile
+  useEffect(() => {
+    if (!swipeDirection || swipeDirection === 'up' || swipeDirection === 'down') return;
+
+    const tabValues = TABS.map(t => t.value);
+    const currentIndex = tabValues.indexOf(activeTab);
+
+    if (swipeDirection === 'left' && currentIndex < tabValues.length - 1) {
+      const nextTab = tabValues[currentIndex + 1];
+      if (nextTab) setActiveTab(nextTab);
+    } else if (swipeDirection === 'right' && currentIndex > 0) {
+      const prevTab = tabValues[currentIndex - 1];
+      if (prevTab) setActiveTab(prevTab);
+    }
+  }, [swipeDirection, activeTab]);
+
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [showFilters, setShowFilters] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -168,7 +206,14 @@ export default function LivestockPage() {
       {/* Header & Nav */}
       <div className="relative z-10 bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Breadcrumbs className="mb-4" />
+          <Breadcrumbs
+            items={[
+              { label: 'Home', href: '/', icon: <Home className="h-4 w-4" /> },
+              { label: 'Livestock' },
+            ]}
+            onItemClick={item => item.href && navigate(item.href)}
+            className="mb-4"
+          />
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -211,8 +256,16 @@ export default function LivestockPage() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content with scroll animation and swipe */}
+      <main
+        ref={el => {
+          (scrollRef as React.MutableRefObject<HTMLElement | null>).current = el;
+          (swipeRef as React.MutableRefObject<HTMLElement | null>).current = el;
+        }}
+        className={`relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 transition-all duration-500 ${
+          isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`}
+      >
         <LoadingErrorContent isLoading={isLoading} error={error} onRetry={refetch}>
           {activeTab === 'overview' && <OverviewTab farmId={currentFarm?.id} />}
           {activeTab === 'list' && <LivestockList farmId={currentFarm?.id} />}

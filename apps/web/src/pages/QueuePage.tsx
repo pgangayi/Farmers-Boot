@@ -13,7 +13,10 @@ export function QueuePage() {
       {/* Breadcrumbs */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Breadcrumbs className="mb-0" />
+          <Breadcrumbs
+            items={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Queue' }]}
+            className="mb-0"
+          />
         </div>
       </div>
 

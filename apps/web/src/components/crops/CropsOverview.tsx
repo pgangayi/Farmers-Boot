@@ -348,7 +348,7 @@ export function CropsOverview({ farmId, className = '', onCropSelect }: CropsOve
               key={crop.id}
               crop={crop}
               field={locations?.find((f: { id: string; name: string }) => f.id === crop.field_id)}
-              statusConfig={STATUS_CONFIG[crop.status]}
+              statusConfig={STATUS_CONFIG[crop.status || 'planned']}
               onEdit={() => handleEditCrop(crop)}
               onDelete={() => setShowDeleteConfirm(crop.id)}
               onSelect={() => onCropSelect?.(crop)}
@@ -362,7 +362,7 @@ export function CropsOverview({ farmId, className = '', onCropSelect }: CropsOve
               key={crop.id}
               crop={crop}
               field={locations?.find((f: { id: string; name: string }) => f.id === crop.field_id)}
-              statusConfig={STATUS_CONFIG[crop.status]}
+              statusConfig={STATUS_CONFIG[crop.status || 'planned']}
               onEdit={() => handleEditCrop(crop)}
               onDelete={() => setShowDeleteConfirm(crop.id)}
               onSelect={() => onCropSelect?.(crop)}
@@ -873,8 +873,8 @@ function CropTable({ crops, fields, statusConfig, onEdit, onDelete, onSelect }: 
                     {fields?.find(f => f.id === crop.field_id)?.name || '-'}
                   </td>
                   <td className="px-4 py-3">
-                    <Badge className={statusConfig[crop.status].bgColor}>
-                      {statusConfig[crop.status].label}
+                    <Badge className={statusConfig[crop.status || 'planned'].bgColor}>
+                      {statusConfig[crop.status || 'planned'].label}
                     </Badge>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600">

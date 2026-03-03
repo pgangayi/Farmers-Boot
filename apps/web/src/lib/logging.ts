@@ -496,7 +496,7 @@ export function logPerformance(
       logger.performance(`${target.constructor.name}.${propertyName}`, duration, {
         args: args.length,
         success: false,
-        error: (error as Error).message,
+        error: error instanceof Error ? error.message : String(error),
       });
 
       throw error;
@@ -505,7 +505,27 @@ export function logPerformance(
 }
 
 // React hook for logging
-export const useLogger = (context: string, config?: Partial<LoggerConfig>) => {
+export const useLogger = (
+  context: string,
+  config?: Partial<LoggerConfig>
+): {
+  debug: (message: string, context?: Record<string, unknown>, tags?: string[]) => void;
+  info: (message: string, context?: Record<string, unknown>, tags?: string[]) => void;
+  warn: (message: string, context?: Record<string, unknown>, tags?: string[]) => void;
+  error: (message: string, context?: Record<string, unknown>, tags?: string[]) => void;
+  fatal: (message: string, context?: Record<string, unknown>, tags?: string[]) => void;
+  performance: (name: string, duration: number, context?: Record<string, unknown>) => void;
+  userAction: (action: string, context?: Record<string, unknown>) => void;
+  apiCall: (
+    method: string,
+    url: string,
+    duration: number,
+    status: number,
+    context?: Record<string, unknown>
+  ) => void;
+  businessEvent: (event: string, context?: Record<string, unknown>) => void;
+  securityEvent: (event: string, context?: Record<string, unknown>) => void;
+} => {
   const logger = LoggerFactory.createLogger(context, config);
 
   useEffect(() => {
