@@ -125,7 +125,9 @@ export function createEnvConfig(): EnvConfig {
       getOptionalEnvVar('SUPABASE_ANON_KEY') ||
       getOptionalEnvVar('VITE_SUPABASE_ANON_KEY') ||
       defaults.supabasePublishableKey,
-    supabaseServiceRoleKey: getOptionalEnvVar('SUPABASE_SERVICE_ROLE_KEY'),
+    supabaseServiceRoleKey:
+      getOptionalEnvVar('SUPABASE_SERVICE_ROLE_KEY') ||
+      getOptionalEnvVar('VITE_SUPABASE_SERVICE_ROLE_KEY'),
 
     // Application URLs
     appUrl: getOptionalEnvVar('APP_URL') || defaults.appUrl,
