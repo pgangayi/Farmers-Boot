@@ -6,8 +6,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '../constants';
-import { apiClient } from '../../lib';
-import { ENDPOINTS } from '../config';
+import { supabaseApi } from '../../lib/supabase';
 import {
   FinanceRecord,
   FinanceFormData,
@@ -17,17 +16,7 @@ import {
   FinanceAnalytics,
 } from '../../components/finance/types';
 
-// Helper to build query string from filters
-const buildQueryString = (filters?: Record<string, any>): string => {
-  if (!filters) return '';
-  const params = new URLSearchParams();
-  Object.entries(filters).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      params.append(key, String(value));
-    }
-  });
-  return params.toString() ? `?${params.toString()}` : '';
-};
+// Direct Supabase table access - no URL building needed
 
 /**
  * Fetch finance records for a farm
@@ -36,8 +25,7 @@ export function useFinance(filters?: { farm_id?: string }) {
   return useQuery({
     queryKey: QUERY_KEYS.finance.list(filters),
     queryFn: async () => {
-      const queryString = buildQueryString(filters);
-      return await apiClient.get<FinanceRecord[]>(`${ENDPOINTS.finance.list}${queryString}`);
+      return await supabaseApi.get<FinanceRecord>('finance_records', { eq: filters });
     },
     enabled: !!filters?.farm_id,
   });
@@ -50,10 +38,7 @@ export function useFinanceRecord(id: string) {
   return useQuery({
     queryKey: QUERY_KEYS.finance.detail(id),
     queryFn: async () => {
-      return await apiClient.get<FinanceRecord | null>(
-        `${ENDPOINTS.finance.list}?id=eq.${id}&limit=1`,
-        { single: true }
-      );
+      return await supabaseApi.getById<FinanceRecord>('finance_records', id);
     },
     enabled: !!id,
   });
@@ -62,14 +47,15 @@ export function useFinanceRecord(id: string) {
 /**
  * Fetch finance summary for a farm
  */
-export function useFinanceSummary(filters?: { farm_id?: string; period?: string }) {
+// TODO: Implement finance summary using Supabase RPC or aggregation
+export function useFinanceSummary(_filters?: { farm_id?: string; period?: string }) {
   return useQuery({
-    queryKey: QUERY_KEYS.finance.summary(filters),
+    queryKey: ['finance', 'summary'],
     queryFn: async () => {
-      const queryString = buildQueryString(filters);
-      return await apiClient.get<FinanceSummary>(`${ENDPOINTS.finance.list}/summary${queryString}`);
+      // Placeholder - implement aggregation query
+      return {} as FinanceSummary;
     },
-    enabled: !!filters?.farm_id,
+    enabled: false, // Disable until implemented
   });
 }
 
@@ -80,8 +66,7 @@ export function useBudgets(farmId?: string) {
   return useQuery({
     queryKey: ['budgets', farmId],
     queryFn: async () => {
-      const queryString = farmId ? `?farm_id=eq.${farmId}` : '';
-      return await apiClient.get<Budget[]>(`/finance/budgets${queryString}`);
+      return await supabaseApi.get<Budget>('budgets', { eq: farmId ? { farm_id: farmId } : undefined });
     },
     enabled: !!farmId,
   });
@@ -94,9 +79,7 @@ export function useBudget(id: string) {
   return useQuery({
     queryKey: ['budgets', 'detail', id],
     queryFn: async () => {
-      return await apiClient.get<Budget | null>(`/finance/budgets?id=eq.${id}&limit=1`, {
-        single: true,
-      });
+      return await supabaseApi.getById<Budget>('budgets', id);
     },
     enabled: !!id,
   });
@@ -105,14 +88,15 @@ export function useBudget(id: string) {
 /**
  * Fetch finance analytics for a farm
  */
-export function useFinanceAnalytics(farmId?: string, period: string = '12months') {
+// TODO: Implement finance analytics using Supabase RPC or aggregation
+export function useFinanceAnalytics(_farmId?: string, _period: string = '12months') {
   return useQuery({
-    queryKey: ['finance', 'analytics', farmId, period],
+    queryKey: ['finance', 'analytics'],
     queryFn: async () => {
-      const queryString = farmId ? `?farm_id=${farmId}&period=${period}` : '';
-      return await apiClient.get<FinanceAnalytics>(`${ENDPOINTS.finance.stats}${queryString}`);
+      // Placeholder - implement aggregation query
+      return {} as FinanceAnalytics;
     },
-    enabled: !!farmId,
+    enabled: false, // Disable until implemented
   });
 }
 
@@ -124,7 +108,7 @@ export function useCreateFinanceRecord() {
 
   return useMutation({
     mutationFn: async (data: FinanceFormData) => {
-      return await apiClient.post<FinanceRecord>(ENDPOINTS.finance.create, data);
+      return await supabaseApi.create<FinanceRecord>('finance_records', data as Partial<FinanceRecord>);
     },
     onSuccess: () => {
       // Invalidate all finance-related queries
@@ -142,7 +126,7 @@ export function useUpdateFinanceRecord() {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<FinanceFormData> }) => {
-      return await apiClient.put<FinanceRecord>(`${ENDPOINTS.finance.update}?id=eq.${id}`, data);
+      return await supabaseApi.update<FinanceRecord>('finance_records', id, data as Partial<FinanceRecord>);
     },
     onSuccess: (_, variables) => {
       // Invalidate all finance-related queries
@@ -161,7 +145,7 @@ export function useDeleteFinanceRecord() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      return await apiClient.delete<{ success: boolean }>(`${ENDPOINTS.finance.delete(id)}`);
+      await supabaseApi.delete('finance_records', id);
     },
     onSuccess: () => {
       // Invalidate all finance-related queries
@@ -179,7 +163,7 @@ export function useCreateBudget() {
 
   return useMutation({
     mutationFn: async (data: BudgetFormData) => {
-      return await apiClient.post<Budget>('/finance/budgets', data);
+      return await supabaseApi.create<Budget>('budgets', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
@@ -195,7 +179,7 @@ export function useUpdateBudget() {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<BudgetFormData> }) => {
-      return await apiClient.put<Budget>(`/finance/budgets?id=eq.${id}`, data);
+      return await supabaseApi.update<Budget>('budgets', id, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
@@ -211,7 +195,7 @@ export function useDeleteBudget() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      return await apiClient.delete<{ success: boolean }>(`/finance/budgets?id=eq.${id}`);
+      await supabaseApi.delete('budgets', id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
@@ -222,12 +206,14 @@ export function useDeleteBudget() {
 /**
  * Generate a finance report
  */
+// TODO: Implement finance report generation using Supabase RPC or Edge Function
 export function useGenerateFinanceReport() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: { farm_id: string; report_type: string; report_period: string }) => {
-      return await apiClient.post<Blob>(ENDPOINTS.finance.report, params);
+    mutationFn: async (_params: { farm_id: string; report_type: string; report_period: string }) => {
+      // Placeholder - implement using Supabase RPC or Edge Function
+      throw new Error('Not implemented');
     },
     onSuccess: () => {
       // Optionally invalidate finance queries after report generation
