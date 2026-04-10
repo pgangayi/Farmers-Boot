@@ -10,7 +10,7 @@ import { env } from './env-config.ts';
 
 // Supabase environment configuration
 const supabaseUrl = env.supabaseUrl;
-const supabaseAnonKey = env.supabaseAnonKey;
+const supabaseKey = env.supabasePublishableKey;
 
 // Debug logger that only logs in development
 const debugLog = (...args: unknown[]) => {
@@ -28,7 +28,7 @@ const debugError = (...args: unknown[]) => {
 debugLog('Initializing client with URL:', supabaseUrl);
 
 // Create Supabase client with latest auth configuration
-export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseKey, {
   auth: {
     // Latest Supabase Auth options
     autoRefreshToken: true,

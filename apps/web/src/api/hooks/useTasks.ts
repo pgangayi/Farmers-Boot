@@ -5,9 +5,9 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../../lib';
-import { QUERY_KEYS, CACHE_CONFIG, API_ENDPOINTS } from '../constants';
-import type { Task, CreateRequest, UpdateRequest } from '../types';
+import { supabaseApi } from '../../lib/supabase';
+import { QUERY_KEYS, CACHE_CONFIG } from '../constants';
+import type { Task } from '../types';
 
 // ============================================================================
 // QUERIES
@@ -20,30 +20,7 @@ export function useTasks(filters?: Record<string, unknown>) {
   return useQuery({
     queryKey: QUERY_KEYS.tasks.list(filters),
     queryFn: async () => {
-      let endpoint: string = API_ENDPOINTS.tasks.list;
-
-      // Add farm_id filter if provided
-      if (filters?.farm_id) {
-        endpoint = `${endpoint}?farm_id=eq.${filters.farm_id}`;
-      }
-
-      const response = await apiClient.get<Task[] | { tasks: Task[] }>(endpoint);
-
-      if (Array.isArray(response)) {
-        return response;
-      }
-
-      // Handle enhanced response with analytics
-      if (
-        response &&
-        typeof response === 'object' &&
-        'tasks' in response &&
-        Array.isArray((response as any).tasks)
-      ) {
-        return (response as any).tasks;
-      }
-
-      return [];
+      return await supabaseApi.get<Task>('tasks', { eq: filters });
     },
     staleTime: CACHE_CONFIG.staleTime.tasks,
     gcTime: CACHE_CONFIG.gcTime.default,
@@ -57,7 +34,7 @@ export function useTask(id: string) {
   return useQuery({
     queryKey: QUERY_KEYS.tasks.detail(id),
     queryFn: async () => {
-      return await apiClient.get<Task>(API_ENDPOINTS.tasks.detail(id), { single: true });
+      return await supabaseApi.getById<Task>('tasks', id);
     },
     enabled: !!id,
     staleTime: CACHE_CONFIG.staleTime.tasks,
@@ -76,8 +53,8 @@ export function useCreateTask() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: CreateRequest<Task>) => {
-      return await apiClient.post<Task>(API_ENDPOINTS.tasks.create, data);
+    mutationFn: async (data: Omit<Task, 'id' | 'created_at' | 'updated_at'>) => {
+      return await supabaseApi.create<Task>('tasks', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.tasks.all });
@@ -92,8 +69,8 @@ export function useUpdateTask() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateRequest<Task> }) => {
-      return await apiClient.put<Task>(API_ENDPOINTS.tasks.update(id), data, { single: true });
+    mutationFn: async ({ id, data }: { id: string; data: Partial<Task> }) => {
+      return await supabaseApi.update<Task>('tasks', id, data);
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.tasks.all });
@@ -110,7 +87,7 @@ export function useDeleteTask() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      await apiClient.delete(API_ENDPOINTS.tasks.delete(id));
+      await supabaseApi.delete('tasks', id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.tasks.all });
@@ -122,7 +99,7 @@ export function useStartTimeLog() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ taskId, startTime }: { taskId: string; startTime: string }) => {
-      return await apiClient.post<{ id: number }>('tasks_time_logs', {
+      return await supabaseApi.create('tasks_time_logs', {
         task_id: taskId,
         start_time: startTime,
       });
@@ -136,8 +113,8 @@ export function useStartTimeLog() {
 export function useStopTimeLog() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ logId, endTime }: { logId: number; endTime: string }) => {
-      return await apiClient.put(`tasks_time_logs?id=eq.${logId}`, {
+    mutationFn: async ({ logId, endTime }: { logId: string; endTime: string }) => {
+      return await supabaseApi.update('tasks_time_logs', logId, {
         end_time: endTime,
       });
     },

@@ -11,7 +11,8 @@ import { z } from 'zod';
 const envSchema = z.object({
   // Supabase Configuration (Required)
   VITE_SUPABASE_URL: z.string().min(1, 'Supabase URL is required'),
-  VITE_SUPABASE_ANON_KEY: z.string().min(1, 'Supabase Anon Key is required'),
+  VITE_SUPABASE_PUBLISHABLE_KEY: z.string().optional(),
+  VITE_SUPABASE_ANON_KEY: z.string().optional(),
 
   // Third-party Services (Optional)
   VITE_SENTRY_DSN: z.string().optional(),

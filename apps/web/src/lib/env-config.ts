@@ -11,7 +11,7 @@
 export interface EnvConfig {
   // Supabase configuration
   supabaseUrl: string;
-  supabaseAnonKey: string;
+  supabasePublishableKey: string;
   supabaseServiceRoleKey?: string;
 
   // Application URLs
@@ -91,7 +91,7 @@ const DEV_DEFAULTS = {
   webUrl: 'http://localhost:3000',
   apiUrl: 'http://localhost:8787',
   supabaseUrl: 'http://localhost:54321',
-  supabaseAnonKey: '',
+  supabasePublishableKey: '',
 };
 
 // Default values for production
@@ -100,7 +100,7 @@ const PROD_DEFAULTS = {
   webUrl: 'https://farmersboot.com',
   apiUrl: 'https://api.farmersboot.com',
   supabaseUrl: '',
-  supabaseAnonKey: '',
+  supabasePublishableKey: '',
 };
 
 // Create environment configuration with graceful fallbacks
@@ -119,10 +119,12 @@ export function createEnvConfig(): EnvConfig {
       getOptionalEnvVar('SUPABASE_URL') ||
       getOptionalEnvVar('VITE_SUPABASE_URL') ||
       defaults.supabaseUrl,
-    supabaseAnonKey:
+    supabasePublishableKey:
+      getOptionalEnvVar('SUPABASE_PUBLISHABLE_KEY') ||
+      getOptionalEnvVar('VITE_SUPABASE_PUBLISHABLE_KEY') ||
       getOptionalEnvVar('SUPABASE_ANON_KEY') ||
       getOptionalEnvVar('VITE_SUPABASE_ANON_KEY') ||
-      defaults.supabaseAnonKey,
+      defaults.supabasePublishableKey,
     supabaseServiceRoleKey: getOptionalEnvVar('SUPABASE_SERVICE_ROLE_KEY'),
 
     // Application URLs
@@ -165,15 +167,18 @@ export function validateEnvConfig(): ConfigValidationResult {
 
   // Check for required Supabase configuration
   const supabaseUrl = getOptionalEnvVar('SUPABASE_URL') || getOptionalEnvVar('VITE_SUPABASE_URL');
-  const supabaseAnonKey =
-    getOptionalEnvVar('SUPABASE_ANON_KEY') || getOptionalEnvVar('VITE_SUPABASE_ANON_KEY');
+  const supabasePublishableKey =
+    getOptionalEnvVar('SUPABASE_PUBLISHABLE_KEY') ||
+    getOptionalEnvVar('VITE_SUPABASE_PUBLISHABLE_KEY') ||
+    getOptionalEnvVar('SUPABASE_ANON_KEY') ||
+    getOptionalEnvVar('VITE_SUPABASE_ANON_KEY');
 
   if (!supabaseUrl) {
     missingRequired.push('SUPABASE_URL or VITE_SUPABASE_URL');
   }
 
-  if (!supabaseAnonKey) {
-    missingRequired.push('SUPABASE_ANON_KEY or VITE_SUPABASE_ANON_KEY');
+  if (!supabasePublishableKey) {
+    missingRequired.push('SUPABASE_PUBLISHABLE_KEY or VITE_SUPABASE_PUBLISHABLE_KEY');
   }
 
   // Check for recommended but not required variables

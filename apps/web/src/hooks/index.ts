@@ -56,8 +56,8 @@ export {
   useUpdateFinanceRecord,
   useDeleteFinanceRecord,
 
-  // API Client
-  apiClient,
+  // Supabase API (use supabaseApi from '../lib/supabase' for direct access)
+  supabaseApi,
 } from '../api';
 
 // ============================================================================

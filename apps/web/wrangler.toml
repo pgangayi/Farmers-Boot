@@ -8,4 +8,4 @@ pages_build_output_dir = "dist"
 # Supabase environment variables for client-side
 [vars]
 VITE_SUPABASE_URL = "https://your-project.supabase.co"
-VITE_SUPABASE_ANON_KEY = "your-anon-key"
+VITE_SUPABASE_PUBLISHABLE_KEY = "your-publishable-key"

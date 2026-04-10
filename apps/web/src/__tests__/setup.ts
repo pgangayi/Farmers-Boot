@@ -104,7 +104,7 @@ vi.mock('../lib/supabase', () => ({
 
 // Mock environment variables
 vi.stubEnv('VITE_SUPABASE_URL', 'http://localhost:8000');
-vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-anon-key');
+vi.stubEnv('VITE_SUPABASE_PUBLISHABLE_KEY', 'test-publishable-key');
 vi.stubEnv('VITE_APP_URL', 'http://localhost:3000');
 vi.stubEnv('VITE_API_URL', 'http://localhost:8787');
 

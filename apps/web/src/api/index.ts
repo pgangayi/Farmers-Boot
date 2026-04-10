@@ -9,14 +9,15 @@
 // ============================================================================
 
 export { supabaseApi, supabase, signIn, signUp, signOut, getCurrentUser } from '../lib/supabase';
-export { apiClient } from '../lib';
+// Legacy apiClient removed - use supabaseApi directly from '../lib/supabase'
 
 // ============================================================================
 // CONFIG & CONSTANTS
 // ============================================================================
 
-export { API_CONFIG, STORAGE_KEYS, FEATURES, ENDPOINTS } from './config';
-export { QUERY_KEYS, CACHE_CONFIG } from './constants';
+// Legacy exports removed - use TABLES, STORAGE_KEYS, FEATURES from './config'
+export { TABLES, STORAGE_KEYS, FEATURES, CACHE_CONFIG } from './config';
+export { QUERY_KEYS, API_ENDPOINTS } from './constants';
 
 // ============================================================================
 // TYPES
