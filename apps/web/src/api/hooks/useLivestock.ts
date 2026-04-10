@@ -9,18 +9,13 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../../lib';
+import { supabase, supabaseApi } from '../../lib/supabase';
 import { CACHE_CONFIG } from '../constants';
 import type {
   Livestock,
   AnimalHealth,
   ProductionRecord,
   BreedingRecord,
-  CreateRequest,
-  UpdateRequest,
-  CreateHealthRecordRequest,
-  CreateProductionRecordRequest,
-  CreateBreedingRecordRequest,
 } from '../types';
 
 // ============================================================================
@@ -59,8 +54,13 @@ export function useLivestock(farm_id?: string, page = 1, limit = 20) {
         ? `livestock?farm_id=eq.${farm_id}&select=${selectFields}&order=created_at.desc&limit=${limit}&offset=${offset}`
         : `livestock?select=${selectFields}&order=created_at.desc&limit=${limit}&offset=${offset}`;
 
-      const response = await apiClient.get<Livestock[]>(endpoint);
-      return response || [];
+      let query = supabase.from('livestock').select(selectFields).order('created_at', { ascending: false }).limit(limit).range(offset, offset + limit - 1);
+      if (farm_id) {
+        query = query.eq('farm_id', farm_id);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
     },
     staleTime: CACHE_CONFIG.staleTime.animals,
     gcTime: CACHE_CONFIG.gcTime.default,
@@ -76,9 +76,9 @@ export function useLivestockAnimal(id: string) {
     queryFn: async (): Promise<Livestock | null> => {
       if (!id) return null;
 
-      return await apiClient.get<Livestock>(`livestock?id=eq.${id}&select=*,profiles(full_name)`, {
-        single: true,
-      });
+      const { data, error } = await supabase.from('livestock').select('*,profiles(full_name)').eq('id', id).single();
+      if (error) throw error;
+      return data;
     },
     enabled: !!id,
     staleTime: CACHE_CONFIG.staleTime.animals,
@@ -92,10 +92,8 @@ export function useCreateLivestock() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: CreateRequest<Livestock>): Promise<Livestock> => {
-      return await apiClient.post<Livestock>('livestock', data, {
-        single: true,
-      });
+    mutationFn: async (data: Omit<Livestock, 'id' | 'created_at' | 'updated_at'>): Promise<Livestock> => {
+      return await supabaseApi.create<Livestock>('livestock', data);
     },
     onSuccess: (_, variables) => {
       // Invalidate relevant queries
@@ -124,9 +122,9 @@ export function useUpdateLivestock() {
       data,
     }: {
       id: string;
-      data: UpdateRequest<Livestock>;
+      data: Partial<Livestock>;
     }): Promise<Livestock> => {
-      return await apiClient.put<Livestock>(`livestock?id=eq.${id}`, data, { single: true });
+      return await supabaseApi.update<Livestock>('livestock', id, data);
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: LIVESTOCK_QUERY_KEYS.all });
@@ -148,7 +146,7 @@ export function useDeleteLivestock() {
 
   return useMutation({
     mutationFn: async (id: string): Promise<void> => {
-      await apiClient.delete(`livestock?id=eq.${id}`);
+      await supabaseApi.delete('livestock', id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: LIVESTOCK_QUERY_KEYS.all });
@@ -173,7 +171,7 @@ export function useBreeds(species?: string) {
         endpoint += `&species=eq.${species}`;
       }
 
-      const response = await apiClient.get<any[]>(endpoint);
+      const response = await supabaseApi.get<any[]>(endpoint);
       return response || [];
     },
     staleTime: CACHE_CONFIG.staleTime.animals,
@@ -192,7 +190,7 @@ export function useCreateBreed() {
       species: string;
       characteristics?: string;
     }): Promise<any> => {
-      return await apiClient.post<any>('lookup_breeds', data, {
+      return await supabaseApi.post<any>('lookup_breeds', data, {
         single: true,
       });
     },
@@ -215,7 +213,7 @@ export function useAnimalHealthRecords(animal_id: string) {
     queryFn: async (): Promise<AnimalHealth[]> => {
       if (!animal_id) return [];
 
-      const response = await apiClient.get<AnimalHealth[]>(
+      const response = await supabaseApi.get<AnimalHealth[]>(
         `livestock_health?livestock_id=eq.${animal_id}&order=check_date.desc`
       );
       return response || [];
@@ -233,7 +231,7 @@ export function useCreateHealthRecord() {
 
   return useMutation({
     mutationFn: async (data: CreateHealthRecordRequest): Promise<AnimalHealth> => {
-      return await apiClient.post<AnimalHealth>('livestock_health', data, {
+      return await supabaseApi.post<AnimalHealth>('livestock_health', data, {
         single: true,
       });
     },
@@ -263,7 +261,7 @@ export function useUpdateHealthRecord() {
       id: string;
       data: UpdateRequest<AnimalHealth>;
     }): Promise<AnimalHealth> => {
-      return await apiClient.put<AnimalHealth>(`livestock_health?id=eq.${id}`, data, {
+      return await supabaseApi.put<AnimalHealth>(`livestock_health?id=eq.${id}`, data, {
         single: true,
       });
     },
@@ -287,7 +285,7 @@ export function useAnimalProductionRecords(animal_id: string) {
     queryFn: async (): Promise<ProductionRecord[]> => {
       if (!animal_id) return [];
 
-      const response = await apiClient.get<ProductionRecord[]>(
+      const response = await supabaseApi.get<ProductionRecord[]>(
         `livestock_production?livestock_id=eq.${animal_id}&order=production_date.desc`
       );
       return response || [];
@@ -305,7 +303,7 @@ export function useCreateProductionRecord() {
 
   return useMutation({
     mutationFn: async (data: CreateProductionRecordRequest): Promise<ProductionRecord> => {
-      return await apiClient.post<ProductionRecord>('livestock_production', data, {
+      return await supabaseApi.post<ProductionRecord>('livestock_production', data, {
         single: true,
       });
     },
@@ -334,7 +332,7 @@ export function useAnimalBreedingRecords(animal_id: string) {
     queryFn: async (): Promise<BreedingRecord[]> => {
       if (!animal_id) return [];
 
-      const response = await apiClient.get<BreedingRecord[]>(
+      const response = await supabaseApi.get<BreedingRecord[]>(
         `livestock_breeding?livestock_id=eq.${animal_id}&order=breeding_date.desc`
       );
       return response || [];
@@ -352,7 +350,7 @@ export function useCreateBreedingRecord() {
 
   return useMutation({
     mutationFn: async (data: CreateBreedingRecordRequest): Promise<BreedingRecord> => {
-      return await apiClient.post<BreedingRecord>('livestock_breeding', data, {
+      return await supabaseApi.post<BreedingRecord>('livestock_breeding', data, {
         single: true,
       });
     },
@@ -394,7 +392,7 @@ export function useLivestockStats(farm_id?: string) {
       }
 
       // This would ideally be a database function or RPC call
-      const livestock = await apiClient.get<Livestock[]>(`livestock?farm_id=eq.${farm_id}`);
+      const livestock = await supabaseApi.get<Livestock[]>(`livestock?farm_id=eq.${farm_id}`);
 
       return {
         total: livestock.length,
@@ -446,7 +444,7 @@ export function useLivestockActivities(farm_id?: string, limit = 10) {
       const activities: LivestockActivity[] = [];
 
       // Fetch recent livestock additions (births/purchases)
-      const recentLivestock = await apiClient.get<Livestock[]>(
+      const recentLivestock = await supabaseApi.get<Livestock[]>(
         `livestock?farm_id=eq.${farm_id}&order=created_at.desc&limit=${limit}`
       );
 
@@ -481,7 +479,7 @@ export function useLivestockActivities(farm_id?: string, limit = 10) {
       });
 
       // Fetch recent health records (vaccinations, checkups)
-      const recentHealth = await apiClient.get<AnimalHealth[]>(
+      const recentHealth = await supabaseApi.get<AnimalHealth[]>(
         `livestock_health?farm_id=eq.${farm_id}&order=created_at.desc&limit=${limit}`
       );
 
