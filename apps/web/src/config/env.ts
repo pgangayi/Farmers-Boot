@@ -1,21 +1,17 @@
 /**
  * ENVIRONMENT CONFIGURATION
  * =========================
- * Re-exports configuration from the unified API layer.
- * This file exists for backward compatibility.
- *
- * PREFER IMPORTING FROM: @/api or src/api
+ * Supabase-focused environment configuration.
+ * Legacy external API exports removed.
  */
 
 import { z } from 'zod';
 
 // Define environment schema with Zod for validation
 const envSchema = z.object({
-  // API Configuration
-  VITE_API_URL: z.string().default('/rest/v1'),
-  VITE_API_BASE_URL: z.string().optional(),
-  VITE_API_TIMEOUT_MS: z.string().transform(Number).default(30000),
-  VITE_API_RETRY_ATTEMPTS: z.string().transform(Number).default(3),
+  // Supabase Configuration (Required)
+  VITE_SUPABASE_URL: z.string().min(1, 'Supabase URL is required'),
+  VITE_SUPABASE_ANON_KEY: z.string().min(1, 'Supabase Anon Key is required'),
 
   // Third-party Services (Optional)
   VITE_SENTRY_DSN: z.string().optional(),
@@ -31,14 +27,16 @@ const envSchema = z.object({
  */
 export const env = envSchema.parse(import.meta.env);
 
-// Re-export from unified API config
+// Re-export from unified API config (legacy exports removed)
 export {
-  ENDPOINTS as apiEndpoints,
   CACHE_CONFIG as cacheConfig,
   STORAGE_KEYS as storageKeys,
   FEATURES as features,
-  API_CONFIG as apiConfig,
+  TABLES as tables,
 } from '../api/config';
+
+// Legacy apiEndpoints removed - use supabaseApi from '../lib/supabase' instead
+export const apiEndpoints = {} as const;
 
 /**
  * Application configuration

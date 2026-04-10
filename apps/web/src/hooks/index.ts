@@ -111,3 +111,23 @@ export {
   useScrollProgress,
   useInfiniteScroll,
 } from './useScrollAnimation';
+
+// ============================================================================
+// CONCURRENT FEATURES & OPTIMISTIC UPDATES (React 18+)
+// ============================================================================
+
+export {
+  useOptimisticData,
+  useOptimisticList,
+  type UseOptimisticDataOptions,
+} from './useOptimisticData';
+
+// ============================================================================
+// VIEW TRANSITIONS API
+// ============================================================================
+
+export {
+  useViewTransition,
+  useElementTransition,
+  type ViewTransitionOptions,
+} from './useViewTransition';

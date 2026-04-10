@@ -1,8 +1,6 @@
 // Unified Configuration System
 // Centralized configuration management for the entire application
 
-import { API_CONFIG } from '../api/config';
-
 // Define feature flags inline
 const featureFlags = {
   enablePerformanceMonitoring: true,
@@ -14,7 +12,8 @@ const featureFlags = {
   enableApiV2: false,
 };
 
-const DEFAULT_API_URL = API_CONFIG.baseUrl || '/api';
+// No external API - all data through Supabase
+const DEFAULT_API_URL = '/api';
 
 export interface AppConfig {
   // App Information

@@ -40,16 +40,7 @@ vi.mock('../lib/supabase', () => ({
   },
 }));
 
-// Mock authStorage
-vi.mock('../lib/authStorage', () => ({
-  authStorage: {
-    setUser: vi.fn(),
-    setToken: vi.fn(),
-    getToken: vi.fn(() => 'test-token'),
-    getUser: vi.fn(),
-    clear: vi.fn(),
-  },
-}));
+// Auth state is now managed entirely by Supabase Auth - no localStorage mocks needed
 
 describe('AuthContext', () => {
   beforeEach(() => {
@@ -491,7 +482,20 @@ describe('AuthContext', () => {
   });
 
   describe('getAuthHeaders', () => {
-    it('should return headers with auth token', async () => {
+    it('should return headers with auth token from session', async () => {
+      const mockUser = {
+        id: 'user-123',
+        email: 'test@example.com',
+        user_metadata: {},
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+      };
+
+      mockGetSession.mockResolvedValueOnce({
+        data: { session: { access_token: 'test-token', user: mockUser } },
+        error: null,
+      });
+
       const wrapper = ({ children }: { children: React.ReactNode }) => (
         <AuthProvider>{children}</AuthProvider>
       );
@@ -504,6 +508,28 @@ describe('AuthContext', () => {
 
       expect(headers).toEqual({
         Authorization: 'Bearer test-token',
+        'Content-Type': 'application/json',
+      });
+    });
+
+    it('should return headers without auth token when no session', async () => {
+      mockGetSession.mockResolvedValueOnce({
+        data: { session: null },
+        error: null,
+      });
+
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <AuthProvider>{children}</AuthProvider>
+      );
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      const headers = result.current.getAuthHeaders();
+
+      expect(headers).toEqual({
+        Authorization: '',
         'Content-Type': 'application/json',
       });
     });

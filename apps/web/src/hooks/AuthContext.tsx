@@ -12,7 +12,6 @@ import { supabase } from '../lib/supabase';
 import { requiredEnv } from '../utils/env';
 import type { User } from '../api/types';
 import type { Session, AuthError } from '@supabase/supabase-js';
-import { authStorage } from '../lib/authStorage';
 
 // ============================================================================
 // TYPES
@@ -138,12 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             error: null,
           });
 
-          if (user) {
-            authStorage.setUser(user);
-            if (session) {
-              authStorage.setToken(session.access_token);
-            }
-          }
+          // User session managed by Supabase Auth - no localStorage needed
         }
       } catch (error) {
         if (mounted) {
@@ -174,14 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         error: null,
       });
 
-      if (user) {
-        authStorage.setUser(user);
-        if (session) {
-          authStorage.setToken(session.access_token);
-        }
-      } else {
-        authStorage.clear();
-      }
+      // User session managed by Supabase Auth - no localStorage needed
     });
 
     return () => {
@@ -245,8 +232,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = useCallback(async () => {
     try {
-      authStorage.clear();
-
       const { error } = await supabase.auth.signOut({
         scope: 'global',
       });
@@ -397,12 +382,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const getAuthHeaders = useCallback(() => {
-    const token = authStorage.getToken();
+    const token = authState.session?.access_token;
     return {
       Authorization: token ? `Bearer ${token}` : '',
       'Content-Type': 'application/json',
     };
-  }, []);
+  }, [authState.session]);
 
   // Computed states
   const computedStates = useMemo(

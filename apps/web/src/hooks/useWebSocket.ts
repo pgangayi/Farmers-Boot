@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from './AuthContext';
-import { authStorage } from '../lib/authStorage';
 
 // Logger utility for consistent logging
 const logger = {
@@ -51,8 +50,8 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     heartbeatInterval = 30000,
   } = options;
 
-  const { isAuthenticated } = useAuth();
-  const accessToken = authStorage.getToken();
+  const { isAuthenticated, session } = useAuth();
+  const accessToken = session?.access_token;
   const [state, setState] = useState<WebSocketState>({
     isConnected: false,
     connectionStatus: 'disconnected',
