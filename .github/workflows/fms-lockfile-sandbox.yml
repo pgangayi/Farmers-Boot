@@ -1,0 +1,12 @@
+name: FMS lockfile sandbox
+
+on:
+  push:
+    branches:
+      - agent/fms-drizzle-lockfile
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'sandbox runner available'
