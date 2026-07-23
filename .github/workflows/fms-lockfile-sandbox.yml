@@ -1,12 +1,27 @@
 name: FMS lockfile sandbox
 
 on:
-  push:
+  pull_request:
     branches:
-      - agent/fms-drizzle-lockfile
+      - main
 
 jobs:
-  probe:
+  generate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - run: echo 'sandbox runner available'
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.2
+
+      - name: Generate lockfile
+        working-directory: fms-lockfile
+        run: pnpm install --lockfile-only --ignore-scripts --no-frozen-lockfile
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fms-drizzle-v1-lockfile
+          path: fms-lockfile/pnpm-lock.yaml
