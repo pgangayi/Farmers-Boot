@@ -1,0 +1,14 @@
+{
+  "name": "@finmaster/supabase",
+  "version": "0.0.1",
+  "private": false,
+  "type": "module",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.108.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "vitest": "^4.1.8"
+  }
+}
