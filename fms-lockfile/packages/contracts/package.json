@@ -1,0 +1,11 @@
+{
+  "name": "@finmaster/contracts",
+  "version": "0.0.0",
+  "private": false,
+  "type": "module",
+  "dependencies": {
+    "@finmaster/db": "workspace:*",
+    "@finmaster/shared": "workspace:*",
+    "zod": "4.4.3"
+  }
+}
