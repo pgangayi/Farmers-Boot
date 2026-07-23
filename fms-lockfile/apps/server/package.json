@@ -1,0 +1,33 @@
+{
+  "name": "@finmaster/server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@finmaster/contracts": "workspace:*",
+    "@finmaster/db": "workspace:*",
+    "@finmaster/shared": "workspace:*",
+    "@finmaster/supabase": "workspace:*",
+    "@finmaster/trpc": "workspace:*",
+    "@finmaster/utils": "workspace:*",
+    "@hono/node-server": "^2.0.4",
+    "@supabase/supabase-js": "^2.108.0",
+    "@trpc/server": "11.17.0",
+    "drizzle-orm": "1.0.0-rc.4",
+    "exceljs": "^4.4.0",
+    "fast-fuzzy": "^1.12.0",
+    "hono": "^4.12.25",
+    "jose": "^6.2.3",
+    "ml": "^8.0.0",
+    "pdfkit": "^0.19.0",
+    "postgres": "3.4.9",
+    "resend": "^6.12.4",
+    "simple-statistics": "^7.9.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.2",
+    "@types/pdfkit": "^0.17.6",
+    "typescript": "7.0.2"
+  }
+}

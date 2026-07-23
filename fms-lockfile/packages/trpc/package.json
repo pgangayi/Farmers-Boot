@@ -1,0 +1,12 @@
+{
+  "name": "@finmaster/trpc",
+  "version": "0.0.0",
+  "private": false,
+  "type": "module",
+  "dependencies": {
+    "@trpc/server": "11.17.0"
+  },
+  "peerDependencies": {
+    "@trpc/server": "11.17.0"
+  }
+}

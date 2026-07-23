@@ -1,0 +1,9 @@
+{
+  "name": "@finmaster/shared",
+  "version": "0.0.0",
+  "private": false,
+  "type": "module",
+  "dependencies": {
+    "decimal.js": "^10.6.0"
+  }
+}
