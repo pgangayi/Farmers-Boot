@@ -130,60 +130,51 @@ export const trapFocus = (element: HTMLElement, event: KeyboardEvent): void => {
 
 // Status badge classes
 const STATUS_GREEN = 'bg-green-100 text-green-700';
+const STATUS_FALLBACK = 'bg-gray-100 text-gray-700';
+
+const STATUS_BADGE_MAP: Record<'crop' | 'animal' | 'task', Record<string, string>> = {
+  crop: {
+    healthy: STATUS_GREEN,
+    'needs attention': 'bg-amber-100 text-amber-700',
+    critical: 'bg-red-100 text-red-700',
+  },
+  animal: {
+    active: STATUS_GREEN,
+    sold: 'bg-orange-100 text-orange-700',
+    deceased: 'bg-red-100 text-red-700',
+  },
+  task: {
+    pending: 'bg-yellow-100 text-yellow-700',
+    in_progress: 'bg-blue-100 text-blue-700',
+    completed: STATUS_GREEN,
+  },
+};
 
 export const getStatusBadgeClasses = (
   status: string | undefined,
   type: 'crop' | 'animal' | 'task'
 ): string => {
-  const statusMap: Record<string, Record<string, string>> = {
-    crop: {
-      healthy: STATUS_GREEN,
-      'needs attention': 'bg-amber-100 text-amber-700',
-      critical: 'bg-red-100 text-red-700',
-    },
-    animal: {
-      active: STATUS_GREEN,
-      sold: 'bg-orange-100 text-orange-700',
-      deceased: 'bg-red-100 text-red-700',
-    },
-    task: {
-      pending: 'bg-yellow-100 text-yellow-700',
-      in_progress: 'bg-blue-100 text-blue-700',
-      completed: STATUS_GREEN,
-    },
-  };
-
-  const validTypes = ['task', 'alert', 'notification'];
-  const validStatuses = ['pending', 'in_progress', 'completed'];
-
-  if (!validTypes.includes(type) || (status && !validStatuses.includes(status))) {
-    return 'bg-gray-100 text-gray-700';
-  }
-
-  const typeStatusMap = statusMap[type];
+  const typeStatusMap = STATUS_BADGE_MAP[type];
   if (!typeStatusMap || !status) {
-    return 'bg-gray-100 text-gray-700';
+    return STATUS_FALLBACK;
   }
 
-  return typeStatusMap[status] || 'bg-gray-100 text-gray-700';
+  return typeStatusMap[status] ?? STATUS_FALLBACK;
 };
 
 // Priority badge classes
+const PRIORITY_FALLBACK = 'text-gray-600';
+
+const PRIORITY_MAP: Record<string, string> = {
+  urgent: 'text-red-600',
+  high: 'text-orange-600',
+  normal: 'text-blue-600',
+  low: 'text-gray-600',
+};
+
 export const getPriorityBadgeClasses = (priority: string): string => {
-  const priorityMap: Record<string, string> = {
-    urgent: 'text-red-600',
-    high: 'text-orange-600',
-    normal: 'text-blue-600',
-    low: 'text-gray-600',
-  };
-
-  const validPriorities = ['urgent', 'high', 'normal', 'low'];
-
-  if (!validPriorities.includes(priority)) {
-    return 'text-gray-600';
-  }
-
-  return priorityMap[priority] ?? 'text-gray-600';
+  const key = (priority ?? '').trim().toLowerCase();
+  return PRIORITY_MAP[key] ?? PRIORITY_FALLBACK;
 };
 
 // Logger utility for development
