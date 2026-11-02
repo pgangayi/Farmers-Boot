@@ -1,10 +1,8 @@
 name: CI
 
+# Manual-only: disable automatic hosted CI to conserve Actions compute.
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   frontend-tests:
@@ -38,11 +36,9 @@ jobs:
           npm run lint || true
 name: CI - root / frontend / backend
 
+# Manual-only: disable automatic hosted CI to conserve Actions compute.
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   root:
