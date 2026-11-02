@@ -1,9 +1,8 @@
 name: FMS lockfile sandbox
 
+# Manual-only: disable automatic hosted CI and deploy triggers to conserve Actions compute.
 on:
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   generate:
