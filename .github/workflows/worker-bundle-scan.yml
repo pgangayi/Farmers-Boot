@@ -1,8 +1,7 @@
 name: CI - Worker bundle safety scan
-
+# Manual-only: disable automatic GitHub-hosted CI to conserve free Actions compute.
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   build-and-scan:
