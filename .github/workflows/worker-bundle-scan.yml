@@ -1,8 +1,8 @@
 name: CI - Worker bundle safety scan
 
+# Manual-only: disable automatic hosted CI and deploy triggers to conserve Actions compute.
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   build-and-scan:
